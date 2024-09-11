@@ -36,8 +36,7 @@ abstract contract Router is DeltaResolver, SafeCallback, IV4Router {
             if (params.zeroForOne) {
                 // pay token 0
                 // take token1
-            }
-            else {
+            } else {
                 // pay token 1
                 // take token0
             }

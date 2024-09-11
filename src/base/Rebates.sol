@@ -8,6 +8,7 @@ struct CampaignInfo {
     uint256 maxGasPerHook;
     uint256 rewardSupply;
     IERC20 token;
+    address owner;
 }
 
 contract Rebates {
@@ -16,9 +17,14 @@ contract Rebates {
     mapping(uint256 id => CampaignInfo info) public campaigns;
     mapping(address referrer => mapping(uint256 id => uint256 rewards)) public claimable;
 
-    function createCampaign(IERC20 token, uint256 gasPerSwap, uint256 maxGasPerHook) external {
-        campaigns[nextCampaignId++] =
-            CampaignInfo({gasPerSwap: gasPerSwap, maxGasPerHook: maxGasPerHook, rewardSupply: 0, token: token});
+    function createCampaign(address owner, IERC20 token, uint256 gasPerSwap, uint256 maxGasPerHook) external {
+        campaigns[nextCampaignId++] = CampaignInfo({
+            gasPerSwap: gasPerSwap,
+            maxGasPerHook: maxGasPerHook,
+            rewardSupply: 0,
+            token: token,
+            owner: owner
+        });
     }
 
     // TODO: allow for tuning
