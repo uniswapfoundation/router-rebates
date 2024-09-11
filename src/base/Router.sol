@@ -27,7 +27,6 @@ abstract contract Router is DeltaResolver, SafeCallback, IV4Router {
     uint8 internal constant SWAP_EXACT_OUTPUT_SINGLE = 2;
     uint8 internal constant SWAP_EXACT_OUTPUT = 3;
 
-
     function _unlockCallback(bytes calldata data) internal override returns (bytes memory) {
         uint8 operation = uint8(bytes1(data[:1]));
         // handle _swap calls
@@ -37,7 +36,8 @@ abstract contract Router is DeltaResolver, SafeCallback, IV4Router {
             if (params.zeroForOne) {
                 // pay token 0
                 // take token1
-            } else {
+            }
+            else {
                 // pay token 1
                 // take token0
             }
