@@ -15,10 +15,13 @@ contract Rebates {
     uint256 public nextCampaignId;
 
     mapping(uint256 id => CampaignInfo info) public campaigns;
-    mapping(address referrer => mapping(uint256 id => uint256 rewards)) public claimable;
 
-    function createCampaign(address owner, IERC20 token, uint256 gasPerSwap, uint256 maxGasPerHook) external {
-        campaigns[nextCampaignId++] = CampaignInfo({
+    function createCampaign(address owner, IERC20 token, uint256 gasPerSwap, uint256 maxGasPerHook)
+        external
+        returns (uint256 _campaignId)
+    {
+        _campaignId = nextCampaignId++;
+        campaigns[_campaignId] = CampaignInfo({
             gasPerSwap: gasPerSwap,
             maxGasPerHook: maxGasPerHook,
             rewardSupply: 0,
@@ -38,12 +41,9 @@ contract Rebates {
         campaign.token.transferFrom(msg.sender, address(this), amount);
     }
 
-    function _claim(uint256 campaignId, address referrer, address destination, uint256 amount) internal {
-        claimable[referrer][campaignId] -= amount;
-
-        // send amount to destination
+    function _claim(uint256 campaignId, uint256 amount, address recipient) internal {
         CampaignInfo storage campaign = campaigns[campaignId];
         campaign.rewardSupply -= amount;
-        campaign.token.transfer(destination, amount);
+        campaign.token.transfer(recipient, amount);
     }
 }

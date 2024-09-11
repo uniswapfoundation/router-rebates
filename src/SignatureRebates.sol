@@ -4,11 +4,13 @@ pragma solidity ^0.8.26;
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {Owned} from "solmate/src/auth/Owned.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
+import {EIP712_v4} from "v4-periphery/src/base/EIP712_v4.sol";
 
 import {Rebates} from "./base/Rebates.sol";
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
+import "forge-std/console2.sol";
 
-contract SignatureRebates is Rebates, Owned {
+contract SignatureRebates is Rebates, EIP712_v4, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
@@ -18,7 +20,7 @@ contract SignatureRebates is Rebates, Owned {
 
     mapping(bytes32 transactionHash => bool seen) public hashUsed;
 
-    constructor(address _owner) Owned(_owner) {}
+    constructor(string memory _name, address _owner) EIP712_v4(_name) Owned(_owner) {}
 
     function claim(
         uint256 campaignId,
@@ -31,11 +33,11 @@ contract SignatureRebates is Rebates, Owned {
         if (hashUsed[transactionHash]) revert HashClaimed();
         if (amountMax < amount) revert InvalidAmount();
 
-        bytes32 digest = ClaimableHash.hashClaimable(msg.sender, transactionHash, amount);
-        signature.verify(digest, campaigns[campaignId].owner);
+        bytes32 digest = ClaimableHash.hashClaimable(msg.sender, transactionHash, amountMax);
+        signature.verify(_hashTypedData(digest), campaigns[campaignId].owner);
 
         // send amount to destination
-        _claim(campaignId, msg.sender, destination, amount);
+        _claim(campaignId, amount, destination);
 
         emit Claimed(transactionHash, campaignId, msg.sender, destination, amount);
     }
