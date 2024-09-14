@@ -14,7 +14,7 @@ contract SignatureRebates is Rebates, EIP712_v4, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
-    error HashClaimed();
+    error HashUsed();
 
     event Claimed(bytes32 transactionHash, uint256 caimpaignId, address claimer, address destination, uint256 amount);
 
@@ -30,11 +30,14 @@ contract SignatureRebates is Rebates, EIP712_v4, Owned {
         uint256 amountMax,
         bytes calldata signature
     ) external {
-        if (hashUsed[transactionHash]) revert HashClaimed();
+        if (hashUsed[transactionHash]) revert HashUsed();
         if (amountMax < amount) revert InvalidAmount();
 
         bytes32 digest = ClaimableHash.hashClaimable(msg.sender, transactionHash, amountMax);
         signature.verify(_hashTypedData(digest), campaigns[campaignId].owner);
+
+        // spend the transaction hash so it is not re-usable
+        hashUsed[transactionHash] = true;
 
         // send amount to destination
         _claim(campaignId, amount, destination);

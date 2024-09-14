@@ -4,6 +4,8 @@ pragma solidity ^0.8.26;
 import "forge-std/Test.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
+import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
+
 import {ClaimableHash} from "../src/libraries/ClaimableHash.sol";
 import {SignatureRebates} from "../src/SignatureRebates.sol";
 
@@ -17,6 +19,9 @@ contract SignatureRebatesTest is Test {
 
     address bob;
     uint256 bobPK;
+
+    // TODO: use ISignatureRebate
+    error HashUsed();
 
     function setUp() public {
         token = new MockERC20("TOKEN", "TKN", 18);
@@ -74,10 +79,59 @@ contract SignatureRebatesTest is Test {
     }
 
     /// @dev invalid signature reverts
-    function test_signature_invalid_revert() public {}
+    function test_signature_invalid_revert(
+        uint128 signerPK,
+        address beneficiary,
+        bytes32 transactionHash,
+        uint256 amountMax,
+        address recipient,
+        uint256 amountToClaim
+    ) public {
+        vm.assume(0 < signerPK);
+        (,, uint256 rewardSupply,, address owner) = rebates.campaigns(campaignId);
+        vm.assume(vm.addr(signerPK) != owner); // signer is not campaign owner
+
+        amountMax = bound(amountMax, 1 wei, rewardSupply);
+        amountToClaim = bound(amountToClaim, 1 wei, amountMax);
+
+        bytes32 digest = getDigest(beneficiary, transactionHash, amountMax);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(SignatureVerification.InvalidSigner.selector);
+        rebates.claim(campaignId, recipient, amountToClaim, transactionHash, amountMax, signature);
+    }
 
     /// @dev re-using a hash reverts
-    function test_signature_hashUsed_revert() public {}
+    function test_signature_replay_hashUsed_revert(
+        address beneficiary,
+        bytes32 transactionHash,
+        uint256 amountMax,
+        address recipient,
+        uint256 amountToClaim
+    ) public {
+        (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
+        amountMax = bound(amountMax, 1 wei, rewardSupply);
+        amountToClaim = bound(amountToClaim, 1 wei, amountMax);
+
+        bytes32 digest = getDigest(beneficiary, transactionHash, amountMax);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        uint256 recipientBalanceBefore = token.balanceOf(recipient);
+
+        // beneficiary claims the rebate
+        vm.prank(beneficiary);
+        rebates.claim(campaignId, recipient, amountToClaim, transactionHash, amountMax, signature);
+        assertEq(token.balanceOf(recipient), recipientBalanceBefore + amountToClaim);
+
+        // signature cannot be re-used
+        vm.expectRevert(HashUsed.selector);
+        vm.prank(beneficiary);
+        rebates.claim(campaignId, recipient, amountToClaim, transactionHash, amountMax, signature);
+    }
 
     /// @dev taking more than allowable amount reverts
     function test_amount_revert() public {}
