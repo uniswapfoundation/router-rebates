@@ -1,7 +1,6 @@
 import { createPublicClient, http } from "viem";
 import { anvil } from "viem/chains";
-import { calculateRebate } from "./src/rebate";
-import { sign } from "./src/signer";
+import { main } from "./src/main";
 
 const publicClient = createPublicClient({
   chain: anvil, // TODO: Use the correct chain
@@ -10,13 +9,24 @@ const publicClient = createPublicClient({
 
 Bun.serve({
   async fetch(req) {
-    const txnHash =
-      "0x8f42d0925429ef3163da00ebdca7c425d4d74a5dc117948d8f3755edcb848f32" as `0x${string}`;
-    const { referrer, gasToRebate } = await calculateRebate(
-      publicClient,
-      txnHash
-    );
-    const signature = await sign(referrer, txnHash, gasToRebate);
-    return new Response(signature);
+    const url = new URL(req.url);
+    const paths = url.pathname.split("/");
+
+    if (paths.length == 3) {
+      const chainId = paths[1];
+      const txnHash = paths[2] as `0x${string}`;
+      if (chainId === "1") {
+        return new Response("Not supported yet");
+      } else if (chainId === "31337") {
+        return new Response(await main(publicClient, txnHash));
+      } else {
+        return new Response("Invalid network");
+      }
+    } else {
+      // TODO: proper 404?
+      return new Response(
+        "Invalid URL. Must be /<chaind_id>/<transaction_hash>"
+      );
+    }
   },
 });
