@@ -1,6 +1,7 @@
 import {
   parseAbi,
   parseEventLogs,
+  type Address,
   type PublicClient,
   type TransactionReceipt,
 } from "viem";
@@ -25,22 +26,30 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 export async function calculateRebate(
   client: PublicClient,
   txnHash: `0x${string}`
-): Promise<bigint> {
+): Promise<{ referrer: Address; gasToRebate: bigint }> {
   return client
     .getTransactionReceipt({ hash: txnHash })
     .then((receipt: TransactionReceipt) => {
-      const gasPrice: bigint = receipt.effectiveGasPrice; // TODO: how do we excluse priority gas, otherwise miners will pay themselves
+      const gasPrice: bigint = receipt.effectiveGasPrice; // TODO: how do we exclude priority gas, otherwise miners will pay themselves
       const swapEvents = parseEventLogs({
         abi: abi,
         logs: receipt.logs,
       }).filter((log) => log.eventName === "Swap");
 
+      // TODO: handle txnHashes without swap event
+
+      const referrer: Address = swapEvents[0].args.sender;
+
+      // TODO: require all events are from the same sender
+
       // iterate each swap event, calculating the rebate for the sender (swap router)
       let gasToRebate: bigint = 0n;
       swapEvents.forEach((swapEvent) => {
-        // const { id, sender } = swapEvent.args;
+        // const { id } = swapEvent.args;
+        // TODO: poolId => poolKey => hook
+
         gasToRebate += 100_000n;
       });
-      return gasToRebate;
+      return { referrer, gasToRebate };
     });
 }

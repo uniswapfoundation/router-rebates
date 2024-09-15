@@ -14,15 +14,15 @@ export async function sign(
   amountMax: bigint
 ): Promise<`0x${string}`> {
   const account = privateKeyToAccount(
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    process.env.ETH_PRIVATE_KEY as `0x${string}`
   );
 
   const signature = await account.signTypedData({
     domain: {
-      name: "FOUNDATION",
-      version: "1",
+      name: process.env.REBATE_CONTRACT_NAME,
+      version: process.env.REBATE_CONTRACT_VERSION,
       chainId: 31337,
-      verifyingContract: "0x0b306bf915c4d645ff596e518faf3f9669b97016",
+      verifyingContract: process.env.REBATE_ADDRESS as `0x${string}`,
     },
     types: types,
     primaryType: "Claimable",
