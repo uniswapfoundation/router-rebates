@@ -5,7 +5,7 @@ import {IPoolManager} from "v4-core/src/interfaces/IPoolManager.sol";
 import {SafeCallback} from "v4-periphery/src/base/SafeCallback.sol";
 import {Router, IV4Router} from "./base/Router.sol";
 
-contract FoundationRouter is Router {
+abstract contract FoundationRouter is Router {
     constructor(IPoolManager _poolManager) SafeCallback(_poolManager) {}
 
     function swapExactInputSingle(IV4Router.ExactInputSingleParams calldata params) external {

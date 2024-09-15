@@ -139,7 +139,7 @@ abstract contract Router is DeltaResolver, SafeCallback, IV4Router {
         uint160 sqrtPriceLimitX96,
         bytes memory hookData
     ) private returns (int128 reciprocalAmount) {
-        if (poolKey.hooks != IHooks(address(0))) _boostForHook(referrer);
+        // if (poolKey.hooks != IHooks(address(0))) _boostForHook(referrer);
         unchecked {
             BalanceDelta delta = poolManager.swap(
                 poolKey,
