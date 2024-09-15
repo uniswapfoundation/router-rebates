@@ -22,6 +22,7 @@ contract SignatureRebatesTest is Test {
 
     // TODO: use ISignatureRebate
     error HashUsed();
+    error InvalidAmount();
 
     function setUp() public {
         token = new MockERC20("TOKEN", "TKN", 18);
@@ -60,6 +61,7 @@ contract SignatureRebatesTest is Test {
         address recipient,
         uint256 amountToClaim
     ) public {
+        vm.assume(recipient != address(rebates));
         (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
         amountMax = bound(amountMax, 1 wei, rewardSupply);
         amountToClaim = bound(amountToClaim, 1 wei, amountMax);
@@ -87,6 +89,7 @@ contract SignatureRebatesTest is Test {
         address recipient,
         uint256 amountToClaim
     ) public {
+        vm.assume(recipient != address(rebates));
         vm.assume(0 < signerPK);
         (,, uint256 rewardSupply,, address owner) = rebates.campaigns(campaignId);
         vm.assume(vm.addr(signerPK) != owner); // signer is not campaign owner
@@ -111,6 +114,7 @@ contract SignatureRebatesTest is Test {
         address recipient,
         uint256 amountToClaim
     ) public {
+        vm.assume(recipient != address(rebates));
         (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
         amountMax = bound(amountMax, 1 wei, rewardSupply);
         amountToClaim = bound(amountToClaim, 1 wei, amountMax);
@@ -134,10 +138,52 @@ contract SignatureRebatesTest is Test {
     }
 
     /// @dev taking more than allowable amount reverts
-    function test_amount_revert() public {}
+    function test_amount_revert(
+        address beneficiary,
+        bytes32 transactionHash,
+        uint256 amountMax,
+        address recipient,
+        uint256 amountToClaim
+    ) public {
+        vm.assume(recipient != address(rebates));
+        (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
+        amountMax = bound(amountMax, 1 wei, rewardSupply);
+        amountToClaim = bound(amountToClaim, 1 wei, type(uint256).max);
+
+        bytes32 digest = getDigest(beneficiary, transactionHash, amountMax);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // revert if amount to claim exceeds the signed amount
+        if (amountMax < amountToClaim) vm.expectRevert(InvalidAmount.selector);
+        vm.prank(beneficiary);
+        rebates.claim(campaignId, recipient, amountToClaim, transactionHash, amountMax, signature);
+    }
 
     /// @dev taking more than reward supply reverts
-    function test_rewardSupply_revert() public {}
+    function test_rewardSupply_revert(
+        address beneficiary,
+        bytes32 transactionHash,
+        uint256 amountMax,
+        address recipient,
+        uint256 amountToClaim
+    ) public {
+        vm.assume(recipient != address(rebates));
+        (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
+        amountMax = bound(amountMax, rewardSupply + 1, type(uint256).max);
+        amountToClaim = bound(amountToClaim, rewardSupply + 1, amountMax);
+
+        bytes32 digest = getDigest(beneficiary, transactionHash, amountMax);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // revert if claiming more than reward supply
+        vm.expectRevert();
+        vm.prank(beneficiary);
+        rebates.claim(campaignId, recipient, amountToClaim, transactionHash, amountMax, signature);
+    }
 
     // --- Helpers --- //
     function getDigest(address referrer, bytes32 transactionHash, uint256 amountMax)
