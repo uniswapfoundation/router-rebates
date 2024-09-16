@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {IHooks} from "v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
 import {PoolManager} from "v4-core/src/PoolManager.sol";
@@ -62,6 +63,13 @@ contract AnvilScript is Script {
         swap_PoolSwapTest(false, -1e18);
         swap_PoolSwapTest(true, 1e18);
         swap_PoolSwapTest(false, 1e18);
+        vm.stopBroadcast();
+
+        vm.startBroadcast();
+        // create a campaign
+        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 1000, 1000);
+        // fund the campaign
+        rebates.deposit(campaignId, 10_000e18);
         vm.stopBroadcast();
     }
 

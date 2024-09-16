@@ -2,7 +2,7 @@ Notes:
 
 bun run index
 
-curl http://localhost:3000/31337/0x8f42d0925429ef3163da00ebdca7c425d4d74a5dc117948d8f3755edcb848f32
+curl http://localhost:3000/31337/0x8dd4d5013af604c89e48cc9ab7cd2b8f26c4434887f11ac65bf8ee8b1cfc2e93
 
 ---
 

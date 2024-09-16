@@ -10,6 +10,7 @@ abstract contract Claimooor {
         rebates = _rebates;
     }
 
+    /// TODO: permission this!!
     function claimRebate(
         uint256 campaignId,
         address recipient,
