@@ -55,6 +55,14 @@ contract AnvilScript is Script {
         vm.startBroadcast();
         createPoolWithLiquidity();
         vm.stopBroadcast();
+
+        // single hop swap with PoolSwapTest fork
+        vm.startBroadcast();
+        swap_PoolSwapTest(true, -1e18);
+        swap_PoolSwapTest(false, -1e18);
+        swap_PoolSwapTest(true, 1e18);
+        swap_PoolSwapTest(false, 1e18);
+        vm.stopBroadcast();
     }
 
     // -----------------------------------------------------------
@@ -104,14 +112,12 @@ contract AnvilScript is Script {
         );
     }
 
-    function swap() internal {
+    function swap_PoolSwapTest(bool zeroForOne, int256 amountSpecified) internal {
         // approve the tokens to the routers
         token0.approve(address(swapRouter), type(uint256).max);
         token1.approve(address(swapRouter), type(uint256).max);
 
         // swap some tokens
-        bool zeroForOne = true;
-        int256 amountSpecified = 1 ether;
         IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
             zeroForOne: zeroForOne,
             amountSpecified: amountSpecified,
