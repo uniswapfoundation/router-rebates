@@ -6,7 +6,9 @@ import ARTIFACT from "../../../broadcast/Anvil.s.sol/31337/run-latest.json";
 
 export const ANVIL_ARTIFACT = ARTIFACT;
 
-export const API_URL = "http://localhost:3000/31337";
+export const BASE_URL = "http://localhost:3000";
+
+export const API_URL = `${BASE_URL}/31337`;
 
 export const wallet0 = privateKeyToAccount(
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"

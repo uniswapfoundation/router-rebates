@@ -48,15 +48,15 @@ contract SignatureRebatesBatchTest is Test {
     }
 
     function test_claimableBatchHash(
-        uint256 campaignId,
+        uint256 _campaignId,
         address referrer,
         bytes32[] calldata transactionHashes,
         uint256 amount
     ) public pure {
         assertEq(
-            ClaimableHash.hashClaimableBatch(campaignId, referrer, transactionHashes, amount),
+            ClaimableHash.hashClaimableBatch(_campaignId, referrer, transactionHashes, amount),
             keccak256(
-                abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, transactionHashes, amount)
+                abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, _campaignId, referrer, keccak256(abi.encodePacked(transactionHashes)), amount)
             )
         );
     }
@@ -172,17 +172,24 @@ contract SignatureRebatesBatchTest is Test {
     }
 
     // --- Helpers --- //
-    function getDigest(uint256 campaignId, address referrer, bytes32[] memory transactionHashes, uint256 amount)
+    function getDigest(uint256 _campaignId, address referrer, bytes32[] memory transactionHashes, uint256 amount)
         internal
         view
         returns (bytes32 digest)
     {
+        // need to keccak256/encodePacked transactionHashes, according to EIP712, as its a dynamic type
         digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
                 rebates.DOMAIN_SEPARATOR(),
                 keccak256(
-                    abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, transactionHashes, amount)
+                    abi.encode(
+                        ClaimableHash.CLAIMABLE_BATCH_TYPEHASH,
+                        _campaignId,
+                        referrer,
+                        keccak256(abi.encodePacked(transactionHashes)),
+                        amount
+                    )
                 )
             )
         );

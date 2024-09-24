@@ -31,6 +31,7 @@ export async function calculateRebate(
     .getTransactionReceipt({ hash: txnHash })
     .then((receipt: TransactionReceipt) => {
       const gasPrice: bigint = receipt.effectiveGasPrice; // TODO: how do we exclude priority gas, otherwise miners will pay themselves
+
       const swapEvents = parseEventLogs({
         abi: abi,
         logs: receipt.logs,
@@ -40,6 +41,8 @@ export async function calculateRebate(
 
       const referrer: Address = swapEvents[0].args.sender;
 
+      // note: within a transaction hash there may be multiple swap routers
+      // this is different than signing for a batch of transaction hashes
       // TODO: require all events are from the same sender
 
       // iterate each swap event, calculating the rebate for the sender (swap router)
@@ -48,7 +51,7 @@ export async function calculateRebate(
         // const { id } = swapEvent.args;
         // TODO: poolId => poolKey => hook
 
-        gasToRebate += 100_000n;
+        gasToRebate += 100_000n * gasPrice;
       });
       return { referrer, gasToRebate };
     });
