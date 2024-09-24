@@ -56,7 +56,7 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     ) external {
         if (transactionHashes.length == 0) revert EmptyHashes();
 
-        bytes32 digest = ClaimableHash.hashClaimableBatch(msg.sender, transactionHashes, amount);
+        bytes32 digest = ClaimableHash.hashClaimableBatch(campaignId, msg.sender, transactionHashes, amount);
         signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
 
         // spend the transaction hashes so they are not re-usable

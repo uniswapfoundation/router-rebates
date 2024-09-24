@@ -7,7 +7,7 @@ library ClaimableHash {
     bytes32 constant CLAIMABLE_TYPEHASH = 0x8ec976293390e4c062de2e5676c4c0d46ef020a3bb6e48ec6ee9abf9f84f2899;
 
     bytes32 constant CLAIMABLE_BATCH_TYPEHASH =
-        keccak256("ClaimableBatch(address referrer,bytes32[] transactionHashes,uint256 amount)");
+        keccak256("ClaimableBatch(uint256 campaignId,address referrer,bytes32[] transactionHashes,uint256 amount)");
 
     function hashClaimable(address referrer, bytes32 transactionHash, uint256 amountMax)
         internal
@@ -31,11 +31,12 @@ library ClaimableHash {
         }
     }
 
-    function hashClaimableBatch(address referrer, bytes32[] calldata transactionHashes, uint256 amount)
-        internal
-        pure
-        returns (bytes32 digest)
-    {
-        return keccak256(abi.encode(CLAIMABLE_BATCH_TYPEHASH, referrer, transactionHashes, amount));
+    function hashClaimableBatch(
+        uint256 campaignId,
+        address referrer,
+        bytes32[] calldata transactionHashes,
+        uint256 amount
+    ) internal pure returns (bytes32 digest) {
+        return keccak256(abi.encode(CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, transactionHashes, amount));
     }
 }

@@ -43,17 +43,21 @@ contract SignatureRebatesBatchTest is Test {
     function test_claimableBatchTypehash() public pure {
         assertEq(
             ClaimableHash.CLAIMABLE_BATCH_TYPEHASH,
-            keccak256("ClaimableBatch(address referrer,bytes32[] transactionHashes,uint256 amount)")
+            keccak256("ClaimableBatch(uint256 campaignId,address referrer,bytes32[] transactionHashes,uint256 amount)")
         );
     }
 
-    function test_claimableBatchHash(address referrer, bytes32[] calldata transactionHashes, uint256 amount)
-        public
-        pure
-    {
+    function test_claimableBatchHash(
+        uint256 campaignId,
+        address referrer,
+        bytes32[] calldata transactionHashes,
+        uint256 amount
+    ) public pure {
         assertEq(
-            ClaimableHash.hashClaimableBatch(referrer, transactionHashes, amount),
-            keccak256(abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, referrer, transactionHashes, amount))
+            ClaimableHash.hashClaimableBatch(campaignId, referrer, transactionHashes, amount),
+            keccak256(
+                abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, transactionHashes, amount)
+            )
         );
     }
 
@@ -156,7 +160,7 @@ contract SignatureRebatesBatchTest is Test {
         (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
         uint256 amount = bound(_amount, rewardSupply + 1, type(uint256).max);
 
-        bytes32 digest = getDigest(beneficiary, transactionHashes, amount);
+        bytes32 digest = getDigest(campaignId, beneficiary, transactionHashes, amount);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -168,7 +172,7 @@ contract SignatureRebatesBatchTest is Test {
     }
 
     // --- Helpers --- //
-    function getDigest(address referrer, bytes32[] memory transactionHashes, uint256 amount)
+    function getDigest(uint256 campaignId, address referrer, bytes32[] memory transactionHashes, uint256 amount)
         internal
         view
         returns (bytes32 digest)
@@ -177,7 +181,9 @@ contract SignatureRebatesBatchTest is Test {
             abi.encodePacked(
                 "\x19\x01",
                 rebates.DOMAIN_SEPARATOR(),
-                keccak256(abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, referrer, transactionHashes, amount))
+                keccak256(
+                    abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, transactionHashes, amount)
+                )
             )
         );
     }
@@ -199,7 +205,7 @@ contract SignatureRebatesBatchTest is Test {
             transactionHashes[i] = keccak256(abi.encode(seed, i));
         }
 
-        bytes32 digest = getDigest(beneficiary, transactionHashes, amount);
+        bytes32 digest = getDigest(campaignId, beneficiary, transactionHashes, amount);
         return (amount, transactionHashes, digest);
     }
 }
