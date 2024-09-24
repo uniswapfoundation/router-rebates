@@ -21,4 +21,14 @@ abstract contract Claimooor {
     ) external {
         rebates.claim(campaignId, recipient, amount, transactionHash, amountMax, signature);
     }
+
+    function claimRebates(
+        uint256 campaignId,
+        address recipient,
+        uint256 amount,
+        bytes32[] calldata transactionHashes,
+        bytes calldata signature
+    ) external {
+        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+    }
 }
