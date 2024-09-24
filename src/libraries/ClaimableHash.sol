@@ -37,6 +37,11 @@ library ClaimableHash {
         bytes32[] calldata transactionHashes,
         uint256 amount
     ) internal pure returns (bytes32 digest) {
-        return keccak256(abi.encode(CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, transactionHashes, amount));
+        // need to keccak256/encodePacked transactionHashes as its a dynamic type
+        return keccak256(
+            abi.encode(
+                CLAIMABLE_BATCH_TYPEHASH, campaignId, referrer, keccak256(abi.encodePacked(transactionHashes)), amount
+            )
+        );
     }
 }
