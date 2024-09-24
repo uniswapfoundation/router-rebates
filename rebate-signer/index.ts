@@ -18,7 +18,7 @@ Bun.serve({
       if (chainId === "1") {
         return new Response("Not supported yet");
       } else if (chainId === "31337") {
-        return new Response(await main(publicClient, txnHash));
+        return Response.json(await main(publicClient, txnHash));
       } else {
         return new Response("Invalid network");
       }

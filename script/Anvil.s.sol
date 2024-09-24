@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {IHooks} from "v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
 import {PoolManager} from "v4-core/src/PoolManager.sol";
@@ -16,96 +17,115 @@ import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
 
 import {SignatureRebates} from "../src/SignatureRebates.sol";
+import {PoolSwapTestClaimable} from "../src/test/PoolSwapTestClaimable.sol";
 
 /// @notice Forge script for deploying v4 & hooks to **anvil**
 /// @dev This script only works on an anvil RPC because v4 exceeds bytecode limits
-contract CounterScript is Script {
+contract AnvilScript is Script {
     address constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
+    bytes constant ZERO_BYTES = new bytes(0);
+
+    SignatureRebates rebates;
+
+    MockERC20 token0;
+    MockERC20 token1;
+    MockERC20 rewardToken;
+
+    PoolKey poolKey;
+    IPoolManager manager;
+    PoolSwapTestClaimable swapRouter;
+    PoolModifyLiquidityTest lpRouter;
 
     function setUp() public {}
 
     function run() public {
-        vm.broadcast();
-        IPoolManager manager = deployPoolManager();
-
-        // Additional helpers for interacting with the pool
         vm.startBroadcast();
-        (PoolModifyLiquidityTest lpRouter, PoolSwapTest swapRouter,) = deployRouters(manager);
+        (token0, token1, rewardToken) = deployTokens();
         vm.stopBroadcast();
 
-        // test the lifecycle (create pool, add liquidity, swap)
         vm.startBroadcast();
-        testLifecycle(manager, address(0x0), lpRouter, swapRouter);
+        rebates = new SignatureRebates("FOUNDATION", address(0));
+        rewardToken.mint(msg.sender, 1_000_000e18);
+        rewardToken.approve(address(rebates), type(uint256).max);
         vm.stopBroadcast();
 
-        vm.broadcast();
-        new SignatureRebates("FOUNDATION", address(0));
+        vm.startBroadcast();
+        deployUniswapV4();
+        vm.stopBroadcast();
+
+        vm.startBroadcast();
+        createPoolWithLiquidity();
+        vm.stopBroadcast();
+
+        // single hop swap with PoolSwapTest fork
+        vm.startBroadcast();
+        swap_PoolSwapTest(true, -1e18);
+        // swap_PoolSwapTest(false, -1e18);
+        // swap_PoolSwapTest(true, 1e18);
+        // swap_PoolSwapTest(false, 1e18);
+        vm.stopBroadcast();
+
+        vm.startBroadcast();
+        // create a campaign
+        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 10e18, 10e18);
+        // fund the campaign
+        rebates.deposit(campaignId, 10_000e18);
+        vm.stopBroadcast();
     }
 
     // -----------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------
-    function deployPoolManager() internal returns (IPoolManager) {
-        return IPoolManager(address(new PoolManager()));
-    }
-
-    function deployRouters(IPoolManager manager)
-        internal
-        returns (PoolModifyLiquidityTest lpRouter, PoolSwapTest swapRouter, PoolDonateTest donateRouter)
-    {
-        lpRouter = new PoolModifyLiquidityTest(manager);
-        swapRouter = new PoolSwapTest(manager);
-        donateRouter = new PoolDonateTest(manager);
-    }
-
-    function deployTokens() internal returns (MockERC20 token0, MockERC20 token1) {
+    function deployTokens() internal returns (MockERC20 _token0, MockERC20 _token1, MockERC20 _rewardToken) {
         MockERC20 tokenA = new MockERC20("MockA", "A", 18);
         MockERC20 tokenB = new MockERC20("MockB", "B", 18);
+        _rewardToken = new MockERC20("Reward", "R", 18);
+
         if (uint160(address(tokenA)) < uint160(address(tokenB))) {
-            token0 = tokenA;
-            token1 = tokenB;
+            _token0 = tokenA;
+            _token1 = tokenB;
         } else {
-            token0 = tokenB;
-            token1 = tokenA;
+            _token0 = tokenB;
+            _token1 = tokenA;
         }
     }
 
-    function testLifecycle(
-        IPoolManager manager,
-        address hook,
-        PoolModifyLiquidityTest lpRouter,
-        PoolSwapTest swapRouter
-    ) internal {
-        (MockERC20 token0, MockERC20 token1) = deployTokens();
+    function deployUniswapV4() internal {
+        manager = new PoolManager();
+        lpRouter = new PoolModifyLiquidityTest(manager);
+        swapRouter = new PoolSwapTestClaimable(manager, rebates);
+    }
+
+    function createPoolWithLiquidity() internal {
         token0.mint(msg.sender, 100_000 ether);
         token1.mint(msg.sender, 100_000 ether);
 
-        bytes memory ZERO_BYTES = new bytes(0);
+        token0.approve(address(lpRouter), type(uint256).max);
+        token1.approve(address(lpRouter), type(uint256).max);
 
         // initialize the pool
         int24 tickSpacing = 60;
-        PoolKey memory poolKey =
-            PoolKey(Currency.wrap(address(token0)), Currency.wrap(address(token1)), 3000, tickSpacing, IHooks(hook));
+        poolKey = PoolKey(
+            Currency.wrap(address(token0)), Currency.wrap(address(token1)), 3000, tickSpacing, IHooks(address(0))
+        );
         manager.initialize(poolKey, Constants.SQRT_PRICE_1_1, ZERO_BYTES);
-
-        // approve the tokens to the routers
-        token0.approve(address(lpRouter), type(uint256).max);
-        token1.approve(address(lpRouter), type(uint256).max);
-        token0.approve(address(swapRouter), type(uint256).max);
-        token1.approve(address(swapRouter), type(uint256).max);
 
         // add full range liquidity to the pool
         lpRouter.modifyLiquidity(
             poolKey,
             IPoolManager.ModifyLiquidityParams(
-                TickMath.minUsableTick(tickSpacing), TickMath.maxUsableTick(tickSpacing), 100 ether, 0
+                TickMath.minUsableTick(tickSpacing), TickMath.maxUsableTick(tickSpacing), 10_000 ether, 0
             ),
             ZERO_BYTES
         );
+    }
+
+    function swap_PoolSwapTest(bool zeroForOne, int256 amountSpecified) internal {
+        // approve the tokens to the routers
+        token0.approve(address(swapRouter), type(uint256).max);
+        token1.approve(address(swapRouter), type(uint256).max);
 
         // swap some tokens
-        bool zeroForOne = true;
-        int256 amountSpecified = 1 ether;
         IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
             zeroForOne: zeroForOne,
             amountSpecified: amountSpecified,
