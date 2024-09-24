@@ -3,8 +3,8 @@ import { type Address } from "viem";
 
 import ANVIL_ARTIFACT from "../../broadcast/Anvil.s.sol/31337/run-latest.json";
 import { getContractAddressByContractName } from "./utils/addresses";
-import { API_URL, BASE_URL, wallet1 } from "./utils/constants";
-import { claimRebate, claimRebates, rewardTokenBalanceOf } from "./utils/chain";
+import { BASE_URL, wallet1 } from "./utils/constants";
+import { claimRebates, rewardTokenBalanceOf } from "./utils/chain";
 
 let router01Address: Address;
 let router02Address: Address;
