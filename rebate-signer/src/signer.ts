@@ -63,7 +63,7 @@ export async function signBatch(
     message: {
       campaignId: campaignId,
       referrer: referrer,
-      transactionHashes: txnHashes,
+      transactionHashes: txnHashes.sort(),
       amount: amount,
     },
   });

@@ -60,9 +60,9 @@ contract AnvilScript is Script {
         // single hop swap with PoolSwapTest fork
         vm.startBroadcast();
         swap_PoolSwapTest(true, -1e18);
-        // swap_PoolSwapTest(false, -1e18);
-        // swap_PoolSwapTest(true, 1e18);
-        // swap_PoolSwapTest(false, 1e18);
+        swap_PoolSwapTest(false, -1e18);
+        swap_PoolSwapTest(true, 1e18);
+        swap_PoolSwapTest(false, 1e18);
         vm.stopBroadcast();
 
         vm.startBroadcast();

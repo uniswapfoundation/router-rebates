@@ -14,11 +14,11 @@ Bun.serve({
 
     if (paths.length == 2 && paths[1] == "sign") {
       const campaignId = BigInt(url.searchParams.get("campaignId")!);
-      const txnHashes = url.searchParams.getAll(
-        "txnHashes[]"
-      ) as `0x${string}`[];
+      const txnHashes = url.searchParams
+        .get("txnHashes")
+        ?.split(",") as `0x${string}`[];
 
-      batch(publicClient, campaignId, txnHashes);
+      return Response.json(await batch(publicClient, campaignId, txnHashes));
     }
     if (paths.length == 3) {
       const chainId = paths[1];

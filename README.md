@@ -4,14 +4,6 @@ bun run index
 
 curl http://localhost:3000/31337/0x8dd4d5013af604c89e48cc9ab7cd2b8f26c4434887f11ac65bf8ee8b1cfc2e93
 
-curl http://localhost:3000/31337/batch?transaction_hashes=0x1,0x2,0x3
-
-curl "http://localhost:3000/31337/s/batch?tags[]=tag1&tags[]=tag2&tags[]=tag3"
-
-curl "http://localhost:3000/sign?tags[]=tag1&tags[]=tag2&tags[]=tag3"
-
-curl "http://localhost:3000/sign?campaignId=1&txnHashes[]=tag1&tags[]=tag2"
-
 ---
 
 ## Foundry

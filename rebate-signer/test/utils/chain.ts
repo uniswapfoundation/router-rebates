@@ -40,6 +40,24 @@ export async function claimRebate(
   await walletClient.writeContract(request);
 }
 
+export async function claimRebates(
+  claimer: Address,
+  campaignId: bigint,
+  recipient: Address,
+  amount: bigint,
+  txnHashes: `0x${string}`[],
+  signature: `0x${string}`
+) {
+  const { request } = await publicClient.simulateContract({
+    account: wallet1,
+    address: claimer,
+    abi: ClaimooorABI,
+    functionName: "claimRebates",
+    args: [campaignId, recipient, amount, txnHashes, signature],
+  });
+  await walletClient.writeContract(request);
+}
+
 // const r = await publicClient.readContract({
 //   address: rebateAddress,
 //   abi: SignatureRebatesABI,

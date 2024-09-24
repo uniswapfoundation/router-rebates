@@ -29,6 +29,8 @@ export async function batch(
     0n
   );
 
+  // TODO: convert gas-rebate (ETH) to reward token
+
   const signature = await signBatch(
     campaignId,
     result[0].referrer,
