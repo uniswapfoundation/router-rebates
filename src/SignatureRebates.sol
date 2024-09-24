@@ -16,6 +16,9 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     error InvalidAmount();
     error HashUsed(bytes32 txnHash);
 
+    /// @dev Thrown when calling claimBatch with an empty list of transaction hashes
+    error EmptyHashes();
+
     event Claimed(bytes32 transactionHash, uint256 caimpaignId, address claimer, address destination, uint256 amount);
 
     mapping(bytes32 transactionHash => bool seen) public hashUsed;
@@ -51,6 +54,8 @@ contract SignatureRebates is Rebates, EIP712, Owned {
         bytes32[] calldata transactionHashes,
         bytes calldata signature
     ) external {
+        if (transactionHashes.length == 0) revert EmptyHashes();
+
         bytes32 digest = ClaimableHash.hashClaimableBatch(msg.sender, transactionHashes, amount);
         signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
 

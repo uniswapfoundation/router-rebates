@@ -6,7 +6,8 @@ library ClaimableHash {
     /// @dev made in-line constant to be accessed in yul
     bytes32 constant CLAIMABLE_TYPEHASH = 0x8ec976293390e4c062de2e5676c4c0d46ef020a3bb6e48ec6ee9abf9f84f2899;
 
-    bytes32 constant CLAIMABLE_BATCH_TYPEHASH = keccak256("ClaimableBatch(address referrer,bytes32[] transactionHashes,uint256 amount)");
+    bytes32 constant CLAIMABLE_BATCH_TYPEHASH =
+        keccak256("ClaimableBatch(address referrer,bytes32[] transactionHashes,uint256 amount)");
 
     function hashClaimable(address referrer, bytes32 transactionHash, uint256 amountMax)
         internal
