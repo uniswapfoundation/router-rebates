@@ -11,6 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 import ANVIL_ARTIFACT from "../../broadcast/Anvil.s.sol/31337/run-latest.json";
 import { abi as PoolSwapTestClaimableABI } from "../../out/PoolSwapTestClaimable.sol/PoolSwapTestClaimable.json";
+import { abi as SignatureRebatesABI } from "../../out/SignatureRebates.sol/SignatureRebates.json";
 
 const API_URL = "http://localhost:3000/31337";
 
@@ -112,7 +113,7 @@ async function claimRebate(
       signature,
     ],
   });
-  await walletClient.writeContract(request);
+  // await walletClient.writeContract(request);
 }
 
 /// @dev a valid signature is used to claim tokens
@@ -125,11 +126,28 @@ test("single hop hash", async () => {
     amountMax: string;
   };
 
+  console.log(signature);
+  console.log(amountMax);
+
+  const r = await publicClient.readContract({
+    address: rebateAddress,
+    abi: SignatureRebatesABI,
+    functionName: "campaigns",
+    args: [0n],
+  });
+  console.log(r);
+
   const wallet1Balance: bigint = await rewardTokenBalanceOf(wallet1.address);
   console.log(wallet1Balance);
 
   // wallet1 claims the rebate
-  claimRebate(wallet1.address, 1n, singleHopHash, BigInt(amountMax), signature);
+  await claimRebate(
+    wallet1.address,
+    1n,
+    singleHopHash,
+    BigInt(amountMax),
+    signature
+  );
 
   const wallet1BalanceAfter: bigint = await rewardTokenBalanceOf(
     wallet1.address

@@ -60,14 +60,14 @@ contract AnvilScript is Script {
         // single hop swap with PoolSwapTest fork
         vm.startBroadcast();
         swap_PoolSwapTest(true, -1e18);
-        swap_PoolSwapTest(false, -1e18);
-        swap_PoolSwapTest(true, 1e18);
-        swap_PoolSwapTest(false, 1e18);
+        // swap_PoolSwapTest(false, -1e18);
+        // swap_PoolSwapTest(true, 1e18);
+        // swap_PoolSwapTest(false, 1e18);
         vm.stopBroadcast();
 
         vm.startBroadcast();
         // create a campaign
-        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 1000, 1000);
+        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 10e18, 10e18);
         // fund the campaign
         rebates.deposit(campaignId, 10_000e18);
         vm.stopBroadcast();
@@ -114,7 +114,7 @@ contract AnvilScript is Script {
         lpRouter.modifyLiquidity(
             poolKey,
             IPoolManager.ModifyLiquidityParams(
-                TickMath.minUsableTick(tickSpacing), TickMath.maxUsableTick(tickSpacing), 100 ether, 0
+                TickMath.minUsableTick(tickSpacing), TickMath.maxUsableTick(tickSpacing), 10_000 ether, 0
             ),
             ZERO_BYTES
         );
