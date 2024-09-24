@@ -21,7 +21,7 @@ contract SignatureRebatesTest is Test {
     uint256 bobPK;
 
     // TODO: use ISignatureRebate
-    error HashUsed();
+    error HashUsed(bytes32 txnHash);
     error InvalidAmount();
 
     function setUp() public {
@@ -132,7 +132,7 @@ contract SignatureRebatesTest is Test {
         assertEq(token.balanceOf(recipient), recipientBalanceBefore + amountToClaim);
 
         // signature cannot be re-used
-        vm.expectRevert(HashUsed.selector);
+        vm.expectRevert(abi.encodeWithSelector(HashUsed.selector, transactionHash));
         vm.prank(beneficiary);
         rebates.claim(campaignId, recipient, amountToClaim, transactionHash, amountMax, signature);
     }

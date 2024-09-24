@@ -14,7 +14,7 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
-    error HashUsed();
+    error HashUsed(bytes32 txnHash);
 
     event Claimed(bytes32 transactionHash, uint256 caimpaignId, address claimer, address destination, uint256 amount);
 
@@ -30,7 +30,7 @@ contract SignatureRebates is Rebates, EIP712, Owned {
         uint256 amountMax,
         bytes calldata signature
     ) external {
-        if (hashUsed[transactionHash]) revert HashUsed();
+        if (hashUsed[transactionHash]) revert HashUsed(transactionHash);
         if (amountMax < amount) revert InvalidAmount();
 
         bytes32 digest = ClaimableHash.hashClaimable(msg.sender, transactionHash, amountMax);
@@ -38,21 +38,34 @@ contract SignatureRebates is Rebates, EIP712, Owned {
 
         // spend the transaction hash so it is not re-usable
         hashUsed[transactionHash] = true;
+        emit Claimed(transactionHash, campaignId, msg.sender, destination, amount);
 
         // send amount to destination
         _claim(campaignId, amount, destination);
-
-        emit Claimed(transactionHash, campaignId, msg.sender, destination, amount);
     }
 
     function claimBatch(
         uint256 campaignId,
         address destination,
         uint256 amount,
-        bytes32[] calldata transactionHash,
-        uint256 amountMax,
+        bytes32[] calldata transactionHashes,
         bytes calldata signature
-    ) external {}
+    ) external {
+        bytes32 digest = ClaimableHash.hashClaimableBatch(msg.sender, transactionHashes, amount);
+        signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
+
+        // spend the transaction hashes so they are not re-usable
+        uint256 i;
+        bytes32 txnHash;
+        for (i; i < transactionHashes.length; ++i) {
+            txnHash = transactionHashes[i];
+            if (hashUsed[txnHash]) revert HashUsed(txnHash);
+            hashUsed[txnHash] = true;
+        }
+
+        // send amount to destination
+        _claim(campaignId, amount, destination);
+    }
 
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
