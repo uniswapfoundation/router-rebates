@@ -32,7 +32,6 @@ export async function calculateRebate(
   const gasPrice = (
     await client.getBlock({ blockNumber: txnReceipt.blockNumber })
   ).baseFeePerGas!;
-  console.log(gasPrice);
 
   const swapEvents = parseEventLogs({
     abi: abi,
@@ -49,26 +48,20 @@ export async function calculateRebate(
 
   // iterate each swap event, calculating the rebate for the sender (swap router)
   // let gasToRebate: bigint = 0n;
-  let gasToRebate = swapEvents.reduce((gasToRebate: bigint, swapEvent) => {
-    // const { id } = swapEvent.args;
-    // TODO: poolId => poolKey => hook
+  let gasUsedToRebate = swapEvents.reduce(
+    (gasUsedToRebate: bigint, swapEvent) => {
+      // const { id } = swapEvent.args;
+      // TODO: poolId => poolKey => hook
 
-    return (
-      gasToRebate +
-      campaign.gasPerSwap * gasPrice +
-      campaign.maxGasPerHook * gasPrice
-    );
-  }, 0n);
-  gasToRebate =
-    txnReceipt.gasUsed < gasToRebate ? txnReceipt.gasUsed : gasToRebate;
-  console.log(gasPrice);
-  console.log(gasToRebate);
-  // swapEvents.forEach((swapEvent) => {
-  //   // const { id } = swapEvent.args;
-  //   // TODO: poolId => poolKey => hook
+      return gasUsedToRebate + campaign.gasPerSwap + campaign.maxGasPerHook;
+    },
+    0n
+  );
 
-  //   gasToRebate +=
-  //     campaign.gasPerSwap * gasPrice + campaign.maxGasPerHook * gasPrice;
-  // });
-  return { referrer, gasToRebate };
+  gasUsedToRebate =
+    txnReceipt.gasUsed < gasUsedToRebate
+      ? (txnReceipt.gasUsed * 90n) / 100n // rebate up to 90% of gasUsed
+      : gasUsedToRebate;
+
+  return { referrer, gasToRebate: gasUsedToRebate * gasPrice };
 }

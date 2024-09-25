@@ -101,12 +101,10 @@ test("batch claim", async () => {
       const block = await publicClient.getBlock({
         blockNumber: receipt.blockNumber,
       });
-      console.log(block.baseFeePerGas);
       return block.baseFeePerGas!;
     })
   );
   const totalBaseFee = baseFees.reduce((acc, baseFee) => acc + baseFee, 0n);
-  console.log(totalBaseFee);
 
   const tokensClaimed = BigInt(amount);
   expect(tokensClaimed).toBe(80_000n * totalBaseFee);

@@ -33,7 +33,6 @@ Bun.serve({
       }
     } else {
       // TODO: proper 404?
-      console.log(url.searchParams.getAll("tags[]"));
       return new Response(
         "Invalid URL. Must be /<chaind_id>/<transaction_hash>"
       );
