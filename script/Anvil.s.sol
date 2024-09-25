@@ -67,7 +67,12 @@ contract AnvilScript is Script {
 
         vm.startBroadcast();
         // create a campaign
-        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 10e18, 10e18);
+        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 80_000, 0);
+        // fund the campaign
+        rebates.deposit(campaignId, 10_000e18);
+
+        // campaign with maxGasPerHook
+        campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 80_000, 10_000);
         // fund the campaign
         rebates.deposit(campaignId, 10_000e18);
         vm.stopBroadcast();

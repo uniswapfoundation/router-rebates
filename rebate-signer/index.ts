@@ -26,13 +26,13 @@ Bun.serve({
       if (chainId === "1") {
         return new Response("Not supported yet");
       } else if (chainId === "31337") {
-        return Response.json(await single(publicClient, txnHash));
+        // TODO: remove/deprecate
+        return Response.json(await single(publicClient, BigInt(0), txnHash));
       } else {
         return new Response("Invalid network");
       }
     } else {
       // TODO: proper 404?
-      console.log(url.searchParams.getAll("tags[]"));
       return new Response(
         "Invalid URL. Must be /<chaind_id>/<transaction_hash>"
       );

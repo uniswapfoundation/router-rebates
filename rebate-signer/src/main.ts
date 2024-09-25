@@ -4,10 +4,12 @@ import { sign, signBatch } from "./signer";
 
 export async function single(
   publicClient: PublicClient,
+  campaignId: bigint,
   txnHash: `0x${string}`
 ): Promise<{ signature: `0x${string}`; amountMax: string }> {
   const { referrer, gasToRebate } = await calculateRebate(
     publicClient,
+    campaignId,
     txnHash
   );
   const signature = await sign(referrer, txnHash, gasToRebate);
@@ -20,7 +22,9 @@ export async function batch(
   txnHashes: `0x${string}`[]
 ): Promise<{ signature: `0x${string}`; amount: string }> {
   const result = await Promise.all(
-    txnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
+    txnHashes.map((txnHash) =>
+      calculateRebate(publicClient, campaignId, txnHash)
+    )
   );
   // TODO: error if multiple referrers
 

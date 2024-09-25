@@ -1,9 +1,9 @@
 import { expect, test, beforeAll } from "bun:test";
-import { type Address } from "viem";
+import { parseGwei, type Address } from "viem";
 
 import ANVIL_ARTIFACT from "../../broadcast/Anvil.s.sol/31337/run-latest.json";
 import { getContractAddressByContractName } from "./utils/addresses";
-import { BASE_URL, wallet1 } from "./utils/constants";
+import { BASE_URL, publicClient, wallet1 } from "./utils/constants";
 import { claimRebates, rewardTokenBalanceOf } from "./utils/chain";
 
 let router01Address: Address;
@@ -92,12 +92,27 @@ test("batch claim", async () => {
     amount: string;
   };
 
+  // sum of block.baseFeePerGas for each txnHash
+  const baseFees = await Promise.all(
+    txnHashes.map(async (txnHash): Promise<bigint> => {
+      const receipt = await publicClient.getTransactionReceipt({
+        hash: txnHash,
+      });
+      const block = await publicClient.getBlock({
+        blockNumber: receipt.blockNumber,
+      });
+      return block.baseFeePerGas!;
+    })
+  );
+  const totalBaseFee = baseFees.reduce((acc, baseFee) => acc + baseFee, 0n);
+
+  const tokensClaimed = BigInt(amount);
+  expect(tokensClaimed).toBe(80_000n * totalBaseFee);
+
   const wallet1BalanceBefore: bigint = await rewardTokenBalanceOf(
     rewardTokenAddress,
     wallet1.address
   );
-
-  const tokensClaimed = BigInt(amount);
 
   // wallet1 claims the rebate
   await claimRebates(
