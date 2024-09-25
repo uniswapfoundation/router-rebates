@@ -59,12 +59,27 @@ export async function claimRebates(
   await walletClient.writeContract(request);
 }
 
-export async function getCampaign(rebateAddress: Address, campaignId: bigint) {
-  const result = await publicClient.readContract({
+export async function getCampaign(
+  rebateAddress: Address,
+  campaignId: bigint
+): Promise<{
+  gasPerSwap: bigint;
+  maxGasPerHook: bigint;
+  rewardSupply: bigint;
+  token: Address;
+  owner: Address;
+}> {
+  const result = (await publicClient.readContract({
     address: rebateAddress,
     abi: SignatureRebatesABI,
     functionName: "campaigns",
     args: [campaignId],
-  });
-  console.log(result);
+  })) as any[];
+  return {
+    gasPerSwap: result[0],
+    maxGasPerHook: result[1],
+    rewardSupply: result[2],
+    token: result[3],
+    owner: result[4],
+  };
 }
