@@ -1,3 +1,4 @@
+import { Database } from "bun:sqlite";
 import { createPublicClient, http } from "viem";
 import { anvil } from "viem/chains";
 import { batch, single } from "./src/main";
@@ -6,6 +7,8 @@ const publicClient = createPublicClient({
   chain: anvil, // TODO: Use the correct chain
   transport: http(),
 });
+
+const db = new Database("../poolid-indexer/.ponder/sqlite/public.db", { readonly: true });
 
 Bun.serve({
   async fetch(req) {
@@ -18,7 +21,7 @@ Bun.serve({
         .get("txnHashes")
         ?.split(",") as `0x${string}`[];
 
-      return Response.json(await batch(publicClient, campaignId, txnHashes));
+      return Response.json(await batch(db, publicClient, campaignId, txnHashes));
     }
     if (paths.length == 3) {
       const chainId = paths[1];

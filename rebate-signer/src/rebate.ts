@@ -1,6 +1,8 @@
+import { Database } from "bun:sqlite";
 import {
   parseAbi,
   parseEventLogs,
+  zeroAddress,
   type Address,
   type PublicClient,
   type TransactionReceipt,
@@ -17,6 +19,7 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 
 /// @dev rebates are only calculated for the first swap router
 export async function calculateRebate(
+  db: Database,
   client: PublicClient,
   campaignId: bigint,
   txnHash: `0x${string}`
@@ -50,17 +53,25 @@ export async function calculateRebate(
   // let gasToRebate: bigint = 0n;
   let gasUsedToRebate = swapEvents.reduce(
     (gasUsedToRebate: bigint, swapEvent) => {
-      // const { id } = swapEvent.args;
-      // TODO: poolId => poolKey => hook
+      // get poolId from swap event
+      const { id } = swapEvent.args;
 
-      return gasUsedToRebate + campaign.gasPerSwap + campaign.maxGasPerHook;
+      // check if poolId has hooks
+      const query = db.query(`SELECT hooks FROM PoolIdMap WHERE id = $poolId;`);
+      const record = query.get({ $poolId: id }) as { hooks: Address };
+      const hooks =
+        record.hooks ?? "0x0000000000000000000000000000000000000000";
+
+      return hooks === zeroAddress
+        ? gasUsedToRebate
+        : gasUsedToRebate + campaign.gasPerSwap + campaign.maxGasPerHook;
     },
     0n
   );
 
   gasUsedToRebate =
     txnReceipt.gasUsed < gasUsedToRebate
-      ? (txnReceipt.gasUsed * 90n) / 100n // rebate up to 90% of gasUsed
+      ? (txnReceipt.gasUsed * 90n) / 100n // rebate a max of 90% of gasUsed
       : gasUsedToRebate;
 
   return { referrer, gasToRebate: gasUsedToRebate * gasPrice };
