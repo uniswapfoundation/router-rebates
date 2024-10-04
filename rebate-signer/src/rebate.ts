@@ -58,11 +58,11 @@ export async function calculateRebate(
 
       // check if poolId has hooks
       const query = db.query(`SELECT hooks FROM PoolIdMap WHERE id = $poolId;`);
-      const record = query.get({ $poolId: id }) as { hooks: Address };
-      const hooks =
-        record.hooks ?? "0x0000000000000000000000000000000000000000";
+      let record = query.get({ $poolId: id });
+      console.log(record);
+      if (record === null) record = { hooks: zeroAddress };
 
-      return hooks === zeroAddress
+      return (record as { hooks: Address }).hooks === zeroAddress
         ? gasUsedToRebate
         : gasUsedToRebate + campaign.gasPerSwap + campaign.maxGasPerHook;
     },

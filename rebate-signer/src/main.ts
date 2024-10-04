@@ -1,21 +1,7 @@
 import { Database } from "bun:sqlite";
 import type { PublicClient } from "viem";
 import { calculateRebate } from "./rebate";
-import { sign, signBatch } from "./signer";
-
-export async function single(
-  publicClient: PublicClient,
-  campaignId: bigint,
-  txnHash: `0x${string}`
-): Promise<{ signature: `0x${string}`; amountMax: string }> {
-  const { referrer, gasToRebate } = await calculateRebate(
-    publicClient,
-    campaignId,
-    txnHash
-  );
-  const signature = await sign(referrer, txnHash, gasToRebate);
-  return { signature, amountMax: gasToRebate.toString() }; // todo convert gas to token amount
-}
+import { signBatch } from "./signer";
 
 export async function batch(
   db: Database,

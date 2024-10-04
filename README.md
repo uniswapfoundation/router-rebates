@@ -1,8 +1,20 @@
 Notes:
 
-bun run index
+1. start anvil
 
-curl http://localhost:3000/31337/0x8dd4d5013af604c89e48cc9ab7cd2b8f26c4434887f11ac65bf8ee8b1cfc2e93
+2. run bun server
+
+```bash
+cd rebate-signer
+bun run dev
+```
+
+3. run ponder
+
+```bash
+cd poolid-indexer
+npm run dev
+```
 
 ---
 
