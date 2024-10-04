@@ -67,11 +67,7 @@ contract AnvilScript is Script {
                     | Hooks.BEFORE_REMOVE_LIQUIDITY_FLAG
             )
         );
-        hook2 = deployHook(
-            uint160(
-                Hooks.BEFORE_SWAP_FLAG
-            )
-        );
+        hook2 = deployHook(uint160(Hooks.BEFORE_SWAP_FLAG));
         vm.stopBroadcast();
 
         vm.startBroadcast();
