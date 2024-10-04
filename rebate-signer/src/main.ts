@@ -1,3 +1,4 @@
+import { Database } from "bun:sqlite";
 import type { PublicClient } from "viem";
 import { calculateRebate } from "./rebate";
 import { sign, signBatch } from "./signer";
@@ -17,13 +18,14 @@ export async function single(
 }
 
 export async function batch(
+  db: Database,
   publicClient: PublicClient,
   campaignId: bigint,
   txnHashes: `0x${string}`[]
 ): Promise<{ signature: `0x${string}`; amount: string }> {
   const result = await Promise.all(
     txnHashes.map((txnHash) =>
-      calculateRebate(publicClient, campaignId, txnHash)
+      calculateRebate(db, publicClient, campaignId, txnHash)
     )
   );
   // TODO: error if multiple referrers
