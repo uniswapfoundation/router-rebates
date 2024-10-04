@@ -8,7 +8,9 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-const db = new Database("../poolid-indexer/.ponder/sqlite/public.db", { readonly: true });
+const db = new Database("../poolid-indexer/.ponder/sqlite/public.db", {
+  readonly: true,
+});
 
 Bun.serve({
   async fetch(req) {
@@ -21,23 +23,13 @@ Bun.serve({
         .get("txnHashes")
         ?.split(",") as `0x${string}`[];
 
-      return Response.json(await batch(db, publicClient, campaignId, txnHashes));
-    }
-    if (paths.length == 3) {
-      const chainId = paths[1];
-      const txnHash = paths[2] as `0x${string}`;
-      if (chainId === "1") {
-        return new Response("Not supported yet");
-      } else if (chainId === "31337") {
-        // TODO: remove/deprecate
-        return Response.json(await single(publicClient, BigInt(0), txnHash));
-      } else {
-        return new Response("Invalid network");
-      }
+      return Response.json(
+        await batch(db, publicClient, campaignId, txnHashes)
+      );
     } else {
       // TODO: proper 404?
       return new Response(
-        "Invalid URL. Must be /<chaind_id>/<transaction_hash>"
+        "Invalid URL. Must be /sign?chainId=1&campaignId=1&txnHashes=0x123,0x456"
       );
     }
   },

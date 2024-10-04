@@ -16,31 +16,6 @@ export async function rewardTokenBalanceOf(
   });
 }
 
-export async function claimRebate(
-  claimer: Address,
-  recipient: Address,
-  amountToClaim: bigint,
-  txnHash: `0x${string}`,
-  amountMax: bigint,
-  signature: `0x${string}`
-) {
-  const { request } = await publicClient.simulateContract({
-    account: wallet1,
-    address: claimer,
-    abi: ClaimooorABI,
-    functionName: "claimRebate",
-    args: [
-      0n, // TODO: grab the last campaign id
-      recipient,
-      amountToClaim,
-      txnHash,
-      amountMax,
-      signature,
-    ],
-  });
-  await walletClient.writeContract(request);
-}
-
 export async function claimRebates(
   claimer: Address,
   campaignId: bigint,

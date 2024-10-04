@@ -39,36 +39,6 @@ beforeAll(() => {
   )?.arguments![1] as `0x${string}`;
 });
 
-/// @dev a valid signature is used to claim tokens
-// test("single hop hash", async () => {
-//   const result = await fetch(`${API_URL}/${singleHopHash}`);
-//   const { signature, amountMax } = (await result.json()) as {
-//     signature: `0x${string}`;
-//     amountMax: string;
-//   };
-
-//   const wallet1BalanceBefore: bigint = await rewardTokenBalanceOf(
-//     rewardTokenAddress,
-//     wallet1.address
-//   );
-
-//   // wallet1 claims the rebate
-//   await claimRebate(
-//     router01Address,
-//     wallet1.address,
-//     1n,
-//     singleHopHash,
-//     BigInt(amountMax),
-//     signature
-//   );
-
-//   const wallet1BalanceAfter: bigint = await rewardTokenBalanceOf(
-//     rewardTokenAddress,
-//     wallet1.address
-//   );
-//   expect(wallet1BalanceAfter).toBe(wallet1BalanceBefore + 1n);
-// });
-
 /// @dev re-using a signature will revert
 
 /// @dev batch transaction hashes
