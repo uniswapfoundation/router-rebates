@@ -25,28 +25,6 @@ contract SignatureRebates is Rebates, EIP712, Owned {
 
     constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {}
 
-    function claim(
-        uint256 campaignId,
-        address destination,
-        uint256 amount,
-        bytes32 transactionHash,
-        uint256 amountMax,
-        bytes calldata signature
-    ) external {
-        if (hashUsed[transactionHash]) revert HashUsed(transactionHash);
-        if (amountMax < amount) revert InvalidAmount();
-
-        bytes32 digest = ClaimableHash.hashClaimable(msg.sender, transactionHash, amountMax);
-        signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
-
-        // spend the transaction hash so it is not re-usable
-        hashUsed[transactionHash] = true;
-        emit Claimed(transactionHash, campaignId, msg.sender, destination, amount);
-
-        // send amount to destination
-        _claim(campaignId, amount, destination);
-    }
-
     function claimBatch(
         uint256 campaignId,
         address destination,

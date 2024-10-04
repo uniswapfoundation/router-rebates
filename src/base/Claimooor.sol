@@ -11,17 +11,6 @@ abstract contract Claimooor {
     }
 
     /// TODO: permission this!!
-    function claimRebate(
-        uint256 campaignId,
-        address recipient,
-        uint256 amount,
-        bytes32 transactionHash,
-        uint256 amountMax,
-        bytes calldata signature
-    ) external {
-        rebates.claim(campaignId, recipient, amount, transactionHash, amountMax, signature);
-    }
-
     function claimRebates(
         uint256 campaignId,
         address recipient,
