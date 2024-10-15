@@ -56,7 +56,13 @@ contract SignatureRebatesBatchTest is Test {
         assertEq(
             ClaimableHash.hashClaimableBatch(_campaignId, referrer, transactionHashes, amount),
             keccak256(
-                abi.encode(ClaimableHash.CLAIMABLE_BATCH_TYPEHASH, _campaignId, referrer, keccak256(abi.encodePacked(transactionHashes)), amount)
+                abi.encode(
+                    ClaimableHash.CLAIMABLE_BATCH_TYPEHASH,
+                    _campaignId,
+                    referrer,
+                    keccak256(abi.encodePacked(transactionHashes)),
+                    amount
+                )
             )
         );
     }
