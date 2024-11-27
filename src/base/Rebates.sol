@@ -39,7 +39,9 @@ contract Rebates {
         campaign.rewardSupply += amount;
 
         // TODO: safeTransferFrom
-        if (!campaign.token.isAddressZero()) {
+        if (campaign.token.isAddressZero()) {
+            require(msg.value == amount, "Rebates: incorrect amount");
+        } else {
             IERC20(Currency.unwrap(campaign.token)).transferFrom(msg.sender, address(this), amount);
         }
     }

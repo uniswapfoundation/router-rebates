@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
-import {Currency} from "v4-core/src/types/Currency.sol";
+import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
@@ -14,6 +14,7 @@ contract SignatureRebatesBatchTest is Test {
     MockERC20 public token;
     SignatureRebates public rebates;
     uint256 campaignId;
+    uint256 nativeEthCampaignId;
 
     address alice;
     uint256 alicePK;
@@ -39,6 +40,9 @@ contract SignatureRebatesBatchTest is Test {
         // TODO: create & deposit
         campaignId = rebates.createCampaign(alice, Currency.wrap(address(token)), 60_000, 10_000);
         rebates.deposit(campaignId, tokenAmount);
+
+        nativeEthCampaignId = rebates.createCampaign(alice, CurrencyLibrary.ADDRESS_ZERO, 80_000, 2_000);
+        rebates.deposit{value: 10 ether}(nativeEthCampaignId, 10 ether);
     }
 
     function test_claimableBatchTypehash() public pure {
@@ -76,7 +80,7 @@ contract SignatureRebatesBatchTest is Test {
         address recipient
     ) public {
         (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
-            fuzzHelper(beneficiary, recipient, _amount, numHashes, seed);
+            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -90,6 +94,28 @@ contract SignatureRebatesBatchTest is Test {
         assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
     }
 
+    function test_signature_claimBatch_nativeETH(
+        address beneficiary,
+        uint8 numHashes,
+        uint256 seed,
+        uint256 _amount,
+        address recipient
+    ) public {
+        (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
+            fuzzHelper(nativeEthCampaignId, beneficiary, recipient, _amount, numHashes, seed);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
+
+        // beneficiary claims the rebate
+        vm.prank(beneficiary);
+        rebates.claimBatch(nativeEthCampaignId, recipient, amount, transactionHashes, signature);
+
+        assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
+    }
+
     /// @dev invalid signature reverts
     function test_signature_invalid_revert(
         uint128 signerPK,
@@ -100,7 +126,7 @@ contract SignatureRebatesBatchTest is Test {
     ) public {
         vm.assume(0 < signerPK);
         (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
-            fuzzHelper(recipient, recipient, _amount, numHashes, seed);
+            fuzzHelper(campaignId, recipient, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -118,7 +144,7 @@ contract SignatureRebatesBatchTest is Test {
         address recipient
     ) public {
         (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
-            fuzzHelper(beneficiary, recipient, _amount, numHashes, seed);
+            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -141,7 +167,7 @@ contract SignatureRebatesBatchTest is Test {
         public
     {
         (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
-            fuzzHelper(beneficiary, recipient, _amount, numHashes, seed);
+            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -162,7 +188,8 @@ contract SignatureRebatesBatchTest is Test {
         uint256 _amount,
         address recipient
     ) public {
-        (, bytes32[] memory transactionHashes,) = fuzzHelper(beneficiary, recipient, _amount, numHashes, seed);
+        (, bytes32[] memory transactionHashes,) =
+            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
         uint256 amount = bound(_amount, rewardSupply + 1, type(uint256).max);
@@ -202,14 +229,17 @@ contract SignatureRebatesBatchTest is Test {
         );
     }
 
-    function fuzzHelper(address beneficiary, address recipient, uint256 amount, uint8 numHashes, uint256 seed)
-        internal
-        view
-        returns (uint256, bytes32[] memory, bytes32)
-    {
+    function fuzzHelper(
+        uint256 campaign,
+        address beneficiary,
+        address recipient,
+        uint256 amount,
+        uint8 numHashes,
+        uint256 seed
+    ) internal view returns (uint256, bytes32[] memory, bytes32) {
         vm.assume(0 < numHashes);
         vm.assume(recipient != address(rebates));
-        (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
+        (,, uint256 rewardSupply,,) = rebates.campaigns(campaign);
         amount = bound(amount, 1 wei, rewardSupply);
 
         // manually generate pseudo random transaction hashes because fuzzer was producing
@@ -219,7 +249,7 @@ contract SignatureRebatesBatchTest is Test {
             transactionHashes[i] = keccak256(abi.encode(seed, i));
         }
 
-        bytes32 digest = getDigest(campaignId, beneficiary, transactionHashes, amount);
+        bytes32 digest = getDigest(campaign, beneficiary, transactionHashes, amount);
         return (amount, transactionHashes, digest);
     }
 }
