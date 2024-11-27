@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Script.sol";
+import {Currency} from "v4-core/src/types/Currency.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {IHooks} from "v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
@@ -96,12 +97,12 @@ contract AnvilScript is Script {
 
         vm.startBroadcast();
         // create a campaign
-        uint256 campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 80_000, 0);
+        uint256 campaignId = rebates.createCampaign(msg.sender, Currency.wrap(address(rewardToken)), 80_000, 0);
         // fund the campaign
         rebates.deposit(campaignId, 10_000e18);
 
         // campaign with maxGasPerHook
-        campaignId = rebates.createCampaign(msg.sender, IERC20(address(rewardToken)), 80_000, 10_000);
+        campaignId = rebates.createCampaign(msg.sender, Currency.wrap(address(rewardToken)), 80_000, 10_000);
         // fund the campaign
         rebates.deposit(campaignId, 10_000e18);
         vm.stopBroadcast();

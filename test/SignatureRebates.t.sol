@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Test.sol";
+import {Currency} from "v4-core/src/types/Currency.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
@@ -36,7 +37,7 @@ contract SignatureRebatesTest is Test {
         token.approve(address(rebates), tokenAmount);
 
         // TODO: create & deposit
-        campaignId = rebates.createCampaign(alice, IERC20(address(token)), 60_000, 10_000);
+        campaignId = rebates.createCampaign(alice, Currency.wrap(address(token)), 60_000, 10_000);
         rebates.deposit(campaignId, tokenAmount);
     }
 
