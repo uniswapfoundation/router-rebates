@@ -18,6 +18,8 @@ import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
 
 import {SignatureRebates} from "../src/SignatureRebates.sol";
 import {PoolSwapTestClaimable} from "../src/test/PoolSwapTestClaimable.sol";
+import {Counter} from "./mocks/Counter.sol";
+import {HookMiner} from "../test/utils/HookMiner.sol";
 
 /// @notice Forge script for deploying v4 & hooks to **anvil**
 /// @dev This script only works on an anvil RPC because v4 exceeds bytecode limits
@@ -31,7 +33,12 @@ contract AnvilScript is Script {
     MockERC20 token1;
     MockERC20 rewardToken;
 
+    address hook1;
+    address hook2;
+
     PoolKey poolKey;
+    PoolKey poolKeyHook1;
+    PoolKey poolKeyHook2;
     IPoolManager manager;
     PoolSwapTestClaimable swapRouter;
     PoolModifyLiquidityTest lpRouter;
@@ -54,15 +61,37 @@ contract AnvilScript is Script {
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        createPoolWithLiquidity();
+        hook1 = deployHook(
+            uint160(
+                Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG
+                    | Hooks.BEFORE_REMOVE_LIQUIDITY_FLAG
+            )
+        );
+        hook2 = deployHook(uint160(Hooks.BEFORE_SWAP_FLAG));
+        vm.stopBroadcast();
+
+        vm.startBroadcast();
+        poolKey = createPoolWithLiquidity(address(0));
+        poolKeyHook1 = createPoolWithLiquidity(hook1);
+        poolKeyHook2 = createPoolWithLiquidity(hook2);
         vm.stopBroadcast();
 
         // single hop swap with PoolSwapTest fork
         vm.startBroadcast();
-        swap_PoolSwapTest(true, -1e18);
-        swap_PoolSwapTest(false, -1e18);
-        swap_PoolSwapTest(true, 1e18);
-        swap_PoolSwapTest(false, 1e18);
+        swap_PoolSwapTest(poolKey, true, -1e18);
+        swap_PoolSwapTest(poolKey, false, -1e18);
+        swap_PoolSwapTest(poolKey, true, 1e18);
+        swap_PoolSwapTest(poolKey, false, 1e18);
+
+        swap_PoolSwapTest(poolKeyHook1, true, -1e18);
+        swap_PoolSwapTest(poolKeyHook1, false, -1e18);
+        swap_PoolSwapTest(poolKeyHook1, true, 1e18);
+        swap_PoolSwapTest(poolKeyHook1, false, 1e18);
+
+        swap_PoolSwapTest(poolKeyHook2, true, -1e18);
+        swap_PoolSwapTest(poolKeyHook2, false, -1e18);
+        swap_PoolSwapTest(poolKeyHook2, true, 1e18);
+        swap_PoolSwapTest(poolKeyHook2, false, 1e18);
         vm.stopBroadcast();
 
         vm.startBroadcast();
@@ -101,7 +130,7 @@ contract AnvilScript is Script {
         swapRouter = new PoolSwapTestClaimable(manager, rebates);
     }
 
-    function createPoolWithLiquidity() internal {
+    function createPoolWithLiquidity(address hookAddress) internal returns (PoolKey memory _poolKey) {
         token0.mint(msg.sender, 100_000 ether);
         token1.mint(msg.sender, 100_000 ether);
 
@@ -110,14 +139,14 @@ contract AnvilScript is Script {
 
         // initialize the pool
         int24 tickSpacing = 60;
-        poolKey = PoolKey(
-            Currency.wrap(address(token0)), Currency.wrap(address(token1)), 3000, tickSpacing, IHooks(address(0))
+        _poolKey = PoolKey(
+            Currency.wrap(address(token0)), Currency.wrap(address(token1)), 3000, tickSpacing, IHooks(hookAddress)
         );
-        manager.initialize(poolKey, Constants.SQRT_PRICE_1_1, ZERO_BYTES);
+        manager.initialize(_poolKey, Constants.SQRT_PRICE_1_1, ZERO_BYTES);
 
         // add full range liquidity to the pool
         lpRouter.modifyLiquidity(
-            poolKey,
+            _poolKey,
             IPoolManager.ModifyLiquidityParams(
                 TickMath.minUsableTick(tickSpacing), TickMath.maxUsableTick(tickSpacing), 10_000 ether, 0
             ),
@@ -126,6 +155,10 @@ contract AnvilScript is Script {
     }
 
     function swap_PoolSwapTest(bool zeroForOne, int256 amountSpecified) internal {
+        swap_PoolSwapTest(poolKey, zeroForOne, amountSpecified);
+    }
+
+    function swap_PoolSwapTest(PoolKey memory key, bool zeroForOne, int256 amountSpecified) internal {
         // approve the tokens to the routers
         token0.approve(address(swapRouter), type(uint256).max);
         token1.approve(address(swapRouter), type(uint256).max);
@@ -138,6 +171,18 @@ contract AnvilScript is Script {
         });
         PoolSwapTest.TestSettings memory testSettings =
             PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
-        swapRouter.swap(poolKey, params, testSettings, ZERO_BYTES);
+        swapRouter.swap(key, params, testSettings, ZERO_BYTES);
+    }
+
+    function deployHook(uint160 flags) internal returns (address) {
+        // Mine a salt that will produce a hook address with the correct flags
+        bytes memory constructorArgs;
+        (address hookAddress, bytes32 salt) =
+            HookMiner.find(CREATE2_DEPLOYER, flags, type(Counter).creationCode, constructorArgs);
+
+        // Deploy the hook using CREATE2
+        Counter counter = new Counter{salt: salt}();
+        require(address(counter) == hookAddress, "CounterScript: hook address mismatch");
+        return hookAddress;
     }
 }
