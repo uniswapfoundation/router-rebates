@@ -14,41 +14,37 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
-    error HashUsed(bytes32 txnHash);
+
+    /// @dev Thrown when claiming the rebate with a block number prior to the last claimed block number
+    error InvalidBlockNumber();
 
     /// @dev Thrown when calling claimBatch with an empty list of transaction hashes
     error EmptyHashes();
 
-    event Claimed(bytes32 transactionHash, uint256 caimpaignId, address claimer, address destination, uint256 amount);
-
-    mapping(bytes32 transactionHash => bool seen) public hashUsed;
+    mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
 
     constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {}
 
-    function claimBatch(
+    function claimWithSignature(
         uint256 campaignId,
-        address destination,
+        address recipient,
         uint256 amount,
         bytes32[] calldata transactionHashes,
+        uint256 lastBlockNumber,
         bytes calldata signature
     ) external {
         if (transactionHashes.length == 0) revert EmptyHashes();
+        if (lastBlockNumber <= lastBlockClaimed[msg.sender]) revert InvalidBlockNumber();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
-        bytes32 digest = ClaimableHash.hashClaimableBatch(campaignId, msg.sender, transactionHashes, amount);
+        bytes32 digest = ClaimableHash.hashClaimable(campaignId, msg.sender, transactionHashes, lastBlockNumber, amount);
         signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
 
-        // spend the transaction hashes so they are not re-usable
-        uint256 i;
-        bytes32 txnHash;
-        for (i; i < transactionHashes.length; ++i) {
-            txnHash = transactionHashes[i];
-            if (hashUsed[txnHash]) revert HashUsed(txnHash);
-            hashUsed[txnHash] = true;
-        }
+        // consume the block number to prevent replaying claims
+        lastBlockClaimed[msg.sender] = lastBlockNumber;
 
-        // send amount to destination
-        _claim(campaignId, amount, destination);
+        // send amount to recipient
+        _claim(campaignId, amount, recipient);
     }
 
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
