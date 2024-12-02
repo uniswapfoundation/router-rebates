@@ -16,8 +16,9 @@ abstract contract Claimooor {
         address recipient,
         uint256 amount,
         bytes32[] calldata transactionHashes,
+        uint256 lastBlockNumber,
         bytes calldata signature
     ) external {
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 }

@@ -23,7 +23,7 @@ contract SignatureRebatesBatchTest is Test {
     uint256 bobPK;
 
     // TODO: use ISignatureRebate
-    error HashUsed(bytes32 txnHash);
+    error InvalidBlockNumber();
     error InvalidAmount();
 
     function setUp() public {
@@ -47,8 +47,10 @@ contract SignatureRebatesBatchTest is Test {
 
     function test_claimableBatchTypehash() public pure {
         assertEq(
-            ClaimableHash.CLAIMABLE_BATCH_TYPEHASH,
-            keccak256("ClaimableBatch(uint256 campaignId,address referrer,bytes32[] transactionHashes,uint256 amount)")
+            ClaimableHash.CLAIMABLE_TYPEHASH,
+            keccak256(
+                "Claimable(uint256 campaignId,address referrer,bytes32[] transactionHashes,uint256 lastBlockNumber,uint256 amount)"
+            )
         );
     }
 
@@ -56,16 +58,18 @@ contract SignatureRebatesBatchTest is Test {
         uint256 _campaignId,
         address referrer,
         bytes32[] calldata transactionHashes,
+        uint256 lastBlockNumber,
         uint256 amount
     ) public pure {
         assertEq(
-            ClaimableHash.hashClaimableBatch(_campaignId, referrer, transactionHashes, amount),
+            ClaimableHash.hashClaimable(_campaignId, referrer, transactionHashes, lastBlockNumber, amount),
             keccak256(
                 abi.encode(
-                    ClaimableHash.CLAIMABLE_BATCH_TYPEHASH,
+                    ClaimableHash.CLAIMABLE_TYPEHASH,
                     _campaignId,
                     referrer,
                     keccak256(abi.encodePacked(transactionHashes)),
+                    lastBlockNumber,
                     amount
                 )
             )
@@ -79,7 +83,7 @@ contract SignatureRebatesBatchTest is Test {
         uint256 _amount,
         address recipient
     ) public {
-        (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
+        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber, bytes32 digest) =
             fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
@@ -89,20 +93,18 @@ contract SignatureRebatesBatchTest is Test {
 
         // beneficiary claims the rebate
         vm.prank(beneficiary);
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
 
         assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
     }
 
-    function test_signature_claimBatch_nativeETH(
-        address beneficiary,
-        uint8 numHashes,
-        uint256 seed,
-        uint256 _amount,
-        address recipient
-    ) public {
-        (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
+    function test_signature_claimBatch_nativeETH(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount)
+        public
+    {
+        address recipient = address(1); // do not fuzz recipient because fuzzed addresses may not have receive function
+        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber, bytes32 digest) =
             fuzzHelper(nativeEthCampaignId, beneficiary, recipient, _amount, numHashes, seed);
+        vm.assume(amount < address(rebates).balance);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -111,7 +113,9 @@ contract SignatureRebatesBatchTest is Test {
 
         // beneficiary claims the rebate
         vm.prank(beneficiary);
-        rebates.claimBatch(nativeEthCampaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(
+            nativeEthCampaignId, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
     }
@@ -125,14 +129,15 @@ contract SignatureRebatesBatchTest is Test {
         address recipient
     ) public {
         vm.assume(0 < signerPK);
-        (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
+        vm.assume(recipient != address(this));
+        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber, bytes32 digest) =
             fuzzHelper(campaignId, recipient, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     /// @dev re-using a hash reverts
@@ -143,7 +148,7 @@ contract SignatureRebatesBatchTest is Test {
         uint256 _amount,
         address recipient
     ) public {
-        (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
+        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber, bytes32 digest) =
             fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
@@ -153,20 +158,20 @@ contract SignatureRebatesBatchTest is Test {
 
         // beneficiary claims the rebate
         vm.prank(beneficiary);
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
         assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
 
         // signature cannot be re-used
-        vm.expectRevert(abi.encodeWithSelector(HashUsed.selector, transactionHashes[0]));
+        vm.expectRevert(InvalidBlockNumber.selector);
         vm.prank(beneficiary);
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     /// @dev taking more than allowable amount reverts
     function test_amount_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount, address recipient)
         public
     {
-        (uint256 amount, bytes32[] memory transactionHashes, bytes32 digest) =
+        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber, bytes32 digest) =
             fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
@@ -177,7 +182,7 @@ contract SignatureRebatesBatchTest is Test {
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
         vm.prank(beneficiary);
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     /// @dev taking more than reward supply reverts
@@ -188,13 +193,13 @@ contract SignatureRebatesBatchTest is Test {
         uint256 _amount,
         address recipient
     ) public {
-        (, bytes32[] memory transactionHashes,) =
+        (, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
             fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
 
         (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
         uint256 amount = bound(_amount, rewardSupply + 1, type(uint256).max);
 
-        bytes32 digest = getDigest(campaignId, beneficiary, transactionHashes, amount);
+        bytes32 digest = getDigest(campaignId, beneficiary, transactionHashes, lastBlockNumber, amount);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
@@ -202,15 +207,17 @@ contract SignatureRebatesBatchTest is Test {
         // revert if claiming more than reward supply
         vm.expectRevert();
         vm.prank(beneficiary);
-        rebates.claimBatch(campaignId, recipient, amount, transactionHashes, signature);
+        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     // --- Helpers --- //
-    function getDigest(uint256 _campaignId, address referrer, bytes32[] memory transactionHashes, uint256 amount)
-        internal
-        view
-        returns (bytes32 digest)
-    {
+    function getDigest(
+        uint256 _campaignId,
+        address referrer,
+        bytes32[] memory transactionHashes,
+        uint256 lastBlockNumber,
+        uint256 amount
+    ) internal view returns (bytes32 digest) {
         // need to keccak256/encodePacked transactionHashes, according to EIP712, as its a dynamic type
         digest = keccak256(
             abi.encodePacked(
@@ -218,10 +225,11 @@ contract SignatureRebatesBatchTest is Test {
                 rebates.DOMAIN_SEPARATOR(),
                 keccak256(
                     abi.encode(
-                        ClaimableHash.CLAIMABLE_BATCH_TYPEHASH,
+                        ClaimableHash.CLAIMABLE_TYPEHASH,
                         _campaignId,
                         referrer,
                         keccak256(abi.encodePacked(transactionHashes)),
+                        lastBlockNumber,
                         amount
                     )
                 )
@@ -236,7 +244,7 @@ contract SignatureRebatesBatchTest is Test {
         uint256 amount,
         uint8 numHashes,
         uint256 seed
-    ) internal view returns (uint256, bytes32[] memory, bytes32) {
+    ) internal view returns (uint256, bytes32[] memory, uint256, bytes32) {
         vm.assume(0 < numHashes);
         vm.assume(recipient != address(rebates));
         (,, uint256 rewardSupply,,) = rebates.campaigns(campaign);
@@ -249,7 +257,7 @@ contract SignatureRebatesBatchTest is Test {
             transactionHashes[i] = keccak256(abi.encode(seed, i));
         }
 
-        bytes32 digest = getDigest(campaign, beneficiary, transactionHashes, amount);
-        return (amount, transactionHashes, digest);
+        bytes32 digest = getDigest(campaign, beneficiary, transactionHashes, block.number, amount);
+        return (amount, transactionHashes, block.number, digest);
     }
 }
