@@ -93,7 +93,9 @@ contract SignatureRebatesBatchTest is Test {
 
         // beneficiary claims the rebate
         vm.prank(beneficiary);
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
 
         assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
     }
@@ -114,7 +116,7 @@ contract SignatureRebatesBatchTest is Test {
         // beneficiary claims the rebate
         vm.prank(beneficiary);
         rebates.claimWithSignature(
-            nativeEthCampaignId, recipient, amount, transactionHashes, lastBlockNumber, signature
+            nativeEthCampaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
         );
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
@@ -137,7 +139,9 @@ contract SignatureRebatesBatchTest is Test {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, recipient, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
     }
 
     /// @dev re-using a hash reverts
@@ -158,13 +162,17 @@ contract SignatureRebatesBatchTest is Test {
 
         // beneficiary claims the rebate
         vm.prank(beneficiary);
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
         assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
 
         // signature cannot be re-used
         vm.expectRevert(InvalidBlockNumber.selector);
         vm.prank(beneficiary);
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
     }
 
     /// @dev taking more than allowable amount reverts
@@ -182,7 +190,9 @@ contract SignatureRebatesBatchTest is Test {
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
         vm.prank(beneficiary);
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
     }
 
     /// @dev taking more than reward supply reverts
@@ -207,7 +217,9 @@ contract SignatureRebatesBatchTest is Test {
         // revert if claiming more than reward supply
         vm.expectRevert();
         vm.prank(beneficiary);
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
     }
 
     // --- Helpers --- //

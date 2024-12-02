@@ -26,8 +26,8 @@ A gas rebate program, sponsored by Uniswap Foundation and Brevis, to encourage r
 
 # Glossary
 
-`swap router` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`
+`swap router` / `beneficiary` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`
 
-`beneficiary` - the address which is claiming the rebate on behalf of the _swap router_
+`claimer` - the address which is claiming the rebate on behalf of the _swap router_ / _beneficiary_
 
 `recipient` - the recipient address that is receiving the rebate

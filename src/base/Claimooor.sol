@@ -2,8 +2,9 @@
 pragma solidity ^0.8.26;
 
 import {SignatureRebates} from "../SignatureRebates.sol";
+import {IRebateClaimer} from "./IRebateClaimer.sol";
 
-abstract contract Claimooor {
+abstract contract Claimooor is IRebateClaimer {
     SignatureRebates public immutable rebates;
 
     constructor(SignatureRebates _rebates) {
@@ -19,6 +20,12 @@ abstract contract Claimooor {
         uint256 lastBlockNumber,
         bytes calldata signature
     ) external {
-        rebates.claimWithSignature(campaignId, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            campaignId, address(this), recipient, amount, transactionHashes, lastBlockNumber, signature
+        );
+    }
+
+    function rebateClaimer() external view override returns (address) {
+        return address(this);
     }
 }
