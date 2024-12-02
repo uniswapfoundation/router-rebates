@@ -22,9 +22,6 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     /// @dev Thrown when calling claimBatch with an empty list of transaction hashes
     error EmptyHashes();
 
-    /// @dev Thrown when caller is the not the authorized claimer on behalf of the beneficiary
-    error UnauthorizedClaimer();
-
     mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
 
     constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {}
@@ -40,11 +37,10 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     ) external {
         if (transactionHashes.length == 0) revert EmptyHashes();
         if (lastBlockNumber <= lastBlockClaimed[msg.sender]) revert InvalidBlockNumber();
-        if (msg.sender != IRebateClaimer(beneficiary).rebateClaimer()) revert UnauthorizedClaimer();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest =
-            ClaimableHash.hashClaimable(campaignId, beneficiary, transactionHashes, lastBlockNumber, amount);
+            ClaimableHash.hashClaimable(campaignId, msg.sender, beneficiary, transactionHashes, lastBlockNumber, amount);
         signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
 
         // consume the block number to prevent replaying claims

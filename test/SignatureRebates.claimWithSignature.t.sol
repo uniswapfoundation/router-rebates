@@ -56,18 +56,20 @@ contract SignatureRebatesBatchTest is Test {
 
     function test_claimableBatchHash(
         uint256 _campaignId,
-        address referrer,
+        address claimer,
+        address beneficiary,
         bytes32[] calldata transactionHashes,
         uint256 lastBlockNumber,
         uint256 amount
     ) public pure {
         assertEq(
-            ClaimableHash.hashClaimable(_campaignId, referrer, transactionHashes, lastBlockNumber, amount),
+            ClaimableHash.hashClaimable(_campaignId, claimer, beneficiary, transactionHashes, lastBlockNumber, amount),
             keccak256(
                 abi.encode(
                     ClaimableHash.CLAIMABLE_TYPEHASH,
                     _campaignId,
-                    referrer,
+                    claimer,
+                    beneficiary,
                     keccak256(abi.encodePacked(transactionHashes)),
                     lastBlockNumber,
                     amount
