@@ -19,7 +19,7 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     /// @dev Thrown when claiming the rebate with a block number prior to the last claimed block number
     error InvalidBlockNumber();
 
-    /// @dev Thrown when calling claimBatch with an empty list of transaction hashes
+    /// @dev Thrown when calling claimWithSignature with an empty list of transaction hashes
     error EmptyHashes();
 
     mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
