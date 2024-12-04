@@ -36,7 +36,7 @@ contract SignatureRebates is Rebates, EIP712, Owned {
         bytes calldata signature
     ) external {
         if (transactionHashes.length == 0) revert EmptyHashes();
-        if (lastBlockNumber <= lastBlockClaimed[msg.sender]) revert InvalidBlockNumber();
+        if (lastBlockNumber <= lastBlockClaimed[beneficiary]) revert InvalidBlockNumber();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest =
