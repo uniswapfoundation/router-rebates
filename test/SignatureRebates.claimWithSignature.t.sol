@@ -11,7 +11,7 @@ import {ClaimableHash} from "../src/libraries/ClaimableHash.sol";
 import {SignatureRebates} from "../src/SignatureRebates.sol";
 import {IRebateClaimer} from "../src/base/IRebateClaimer.sol";
 
-contract SignatureRebatesBatchTest is Test {
+contract SignatureRebatesTest is Test {
     MockERC20 public token;
     SignatureRebates public rebates;
     uint256 campaignId;
@@ -46,7 +46,7 @@ contract SignatureRebatesBatchTest is Test {
         rebates.deposit{value: 10 ether}(nativeEthCampaignId, 10 ether);
     }
 
-    function test_claimableBatchTypehash() public pure {
+    function test_claimableTypehash() public pure {
         assertEq(
             ClaimableHash.CLAIMABLE_TYPEHASH,
             keccak256(
@@ -55,7 +55,7 @@ contract SignatureRebatesBatchTest is Test {
         );
     }
 
-    function test_claimableBatchHash(
+    function test_claimableHash(
         uint256 _campaignId,
         address claimer,
         address beneficiary,
