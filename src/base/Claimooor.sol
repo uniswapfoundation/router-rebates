@@ -13,7 +13,6 @@ abstract contract Claimooor is IRebateClaimer {
 
     /// TODO: permission this!!
     function claimRebates(
-        uint256 campaignId,
         address recipient,
         uint256 amount,
         bytes32[] calldata transactionHashes,
@@ -21,7 +20,7 @@ abstract contract Claimooor is IRebateClaimer {
         bytes calldata signature
     ) external {
         rebates.claimWithSignature(
-            campaignId, address(this), recipient, amount, transactionHashes, lastBlockNumber, signature
+            address(this), recipient, amount, transactionHashes, lastBlockNumber, signature
         );
     }
 
