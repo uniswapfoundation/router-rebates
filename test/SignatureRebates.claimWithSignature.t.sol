@@ -11,8 +11,7 @@ import {ClaimableHash} from "../src/libraries/ClaimableHash.sol";
 import {SignatureRebates} from "../src/SignatureRebates.sol";
 import {IRebateClaimer} from "../src/base/IRebateClaimer.sol";
 
-contract SignatureRebatesBatchTest is Test {
-    MockERC20 public token;
+contract SignatureRebatesTest is Test {
     SignatureRebates public rebates;
     uint256 campaignId;
     uint256 nativeEthCampaignId;
@@ -28,35 +27,27 @@ contract SignatureRebatesBatchTest is Test {
     error InvalidAmount();
 
     function setUp() public {
-        token = new MockERC20("TOKEN", "TKN", 18);
         rebates = new SignatureRebates("REBATES", address(this));
 
         (alice, alicePK) = makeAddrAndKey("ALICE");
         (bob, bobPK) = makeAddrAndKey("BOB");
 
-        uint256 tokenAmount = 10_000e18;
-        token.mint(address(this), tokenAmount);
-        token.approve(address(rebates), tokenAmount);
+        rebates.setSigner(alice);
 
-        // TODO: create & deposit
-        campaignId = rebates.createCampaign(alice, Currency.wrap(address(token)), 60_000, 10_000);
-        rebates.deposit(campaignId, tokenAmount);
-
-        nativeEthCampaignId = rebates.createCampaign(alice, CurrencyLibrary.ADDRESS_ZERO, 80_000, 2_000);
-        rebates.deposit{value: 10 ether}(nativeEthCampaignId, 10 ether);
+        // deposit and fund the campaign
+        vm.deal(address(rebates), 10 ether);
     }
 
-    function test_claimableBatchTypehash() public pure {
+    function test_claimableTypehash() public pure {
         assertEq(
             ClaimableHash.CLAIMABLE_TYPEHASH,
             keccak256(
-                "Claimable(uint256 campaignId,address claimer,address beneficiary,bytes32[] transactionHashes,uint256 lastBlockNumber,uint256 amount)"
+                "Claimable(address claimer,address beneficiary,bytes32[] transactionHashes,uint256 lastBlockNumber,uint256 amount)"
             )
         );
     }
 
-    function test_claimableBatchHash(
-        uint256 _campaignId,
+    function test_claimableHash(
         address claimer,
         address beneficiary,
         bytes32[] calldata transactionHashes,
@@ -64,11 +55,10 @@ contract SignatureRebatesBatchTest is Test {
         uint256 amount
     ) public pure {
         assertEq(
-            ClaimableHash.hashClaimable(_campaignId, claimer, beneficiary, transactionHashes, lastBlockNumber, amount),
+            ClaimableHash.hashClaimable(claimer, beneficiary, transactionHashes, lastBlockNumber, amount),
             keccak256(
                 abi.encode(
                     ClaimableHash.CLAIMABLE_TYPEHASH,
-                    _campaignId,
                     claimer,
                     beneficiary,
                     keccak256(abi.encodePacked(transactionHashes)),
@@ -79,24 +69,20 @@ contract SignatureRebatesBatchTest is Test {
         );
     }
 
-    function test_signature_claimBatch(
-        address beneficiary,
-        uint8 numHashes,
-        uint256 seed,
-        uint256 _amount,
-        address recipient
-    ) public {
-        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
-            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
-        bytes memory signature = mockSigner(alicePK, campaignId, address(this), beneficiary, transactionHashes, amount);
+    function test_signature_claimWithSignature(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount)
+        public
+    {
+        address recipient = address(1);
+        vm.assume(recipient.code.length == 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+        (bytes memory signature, uint256 lastBlockNumber) =
+            mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
-        uint256 recipientBalanceBefore = token.balanceOf(recipient);
+        uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
 
-        assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
+        assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
     }
 
     /// @dev test claims where the rebateClaimer is pranked
@@ -104,39 +90,18 @@ contract SignatureRebatesBatchTest is Test {
         address beneficiary,
         uint8 numHashes,
         uint256 seed,
-        uint256 _amount,
-        address recipient
+        uint256 _amount
     ) public {
-        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
-            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
-        bytes memory signature = mockSigner(alicePK, campaignId, bob, beneficiary, transactionHashes, amount);
-
-        uint256 recipientBalanceBefore = token.balanceOf(recipient);
-
-        vm.prank(bob);
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
-
-        assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
-    }
-
-    function test_signature_claimBatch_nativeETH(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount)
-        public
-    {
-        address recipient = address(1); // do not fuzz recipient because fuzzed addresses may not have receive function
-        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
-            fuzzHelper(nativeEthCampaignId, beneficiary, recipient, _amount, numHashes, seed);
-        vm.assume(amount < address(rebates).balance);
-
-        bytes memory signature =
-            mockSigner(alicePK, nativeEthCampaignId, address(this), beneficiary, transactionHashes, amount);
+        address recipient = address(1);
+        vm.assume(recipient.code.length == 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+        (bytes memory signature, uint256 lastBlockNumber) =
+            mockSigner(alicePK, bob, beneficiary, transactionHashes, amount);
 
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
-        rebates.claimWithSignature(
-            nativeEthCampaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        vm.prank(bob);
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
     }
@@ -147,91 +112,69 @@ contract SignatureRebatesBatchTest is Test {
         address beneficiary,
         uint8 numHashes,
         uint256 seed,
-        uint256 _amount,
-        address recipient
+        uint256 _amount
     ) public {
+        address recipient = address(1);
         vm.assume(0 < signerPK);
-        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber, bytes32 digest) =
-            fuzzHelper(campaignId, recipient, recipient, _amount, numHashes, seed);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
 
-        bytes memory signature = mockSigner(signerPK, campaignId, address(this), beneficiary, transactionHashes, amount);
+        (bytes memory signature, uint256 lastBlockNumber) =
+            mockSigner(signerPK, address(this), beneficiary, transactionHashes, amount);
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
-    /// @dev re-using a hash reverts
-    function test_signature_replay_hashUsed_revert(
-        address beneficiary,
-        uint8 numHashes,
-        uint256 seed,
-        uint256 _amount,
-        address recipient
-    ) public {
-        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
-            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
-        bytes memory signature = mockSigner(alicePK, campaignId, address(this), beneficiary, transactionHashes, amount);
+    /// @dev re-using a signature reverts on invalid block number
+    function test_signature_replay_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
+        address recipient = address(1);
+        vm.assume(recipient.code.length == 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+        (bytes memory signature, uint256 lastBlockNumber) =
+            mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
-        uint256 recipientBalanceBefore = token.balanceOf(recipient);
+        uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
-        assertEq(token.balanceOf(recipient), recipientBalanceBefore + amount);
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
 
         // signature cannot be re-used
         vm.expectRevert(InvalidBlockNumber.selector);
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     /// @dev taking more than allowable amount reverts
-    function test_amount_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount, address recipient)
-        public
-    {
-        (uint256 amount, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
-            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
-        bytes memory signature = mockSigner(alicePK, campaignId, address(this), beneficiary, transactionHashes, amount);
+    function test_amount_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
+        address recipient = address(1);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+        (bytes memory signature, uint256 lastBlockNumber) =
+            mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
         // attempt to claim more than what was signed
         amount = bound(amount, amount + 1, type(uint256).max);
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     /// @dev taking more than reward supply reverts
-    function test_rewardSupply_revert(
-        address beneficiary,
-        uint8 numHashes,
-        uint256 seed,
-        uint256 _amount,
-        address recipient
-    ) public {
-        (, bytes32[] memory transactionHashes, uint256 lastBlockNumber,) =
-            fuzzHelper(campaignId, beneficiary, recipient, _amount, numHashes, seed);
+    function test_rewardSupply_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
+        address recipient = address(1);
+        (, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
 
-        (,, uint256 rewardSupply,,) = rebates.campaigns(campaignId);
-        uint256 amount = bound(_amount, rewardSupply + 1, type(uint256).max);
+        uint256 amount = bound(_amount, address(rebates).balance + 1, type(uint256).max);
 
-        bytes memory signature = mockSigner(alicePK, campaignId, address(this), beneficiary, transactionHashes, amount);
+        (bytes memory signature, uint256 lastBlockNumber) =
+            mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
         // revert if claiming more than reward supply
         vm.expectRevert();
         vm.prank(beneficiary);
-        rebates.claimWithSignature(
-            campaignId, beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     // --- Helpers --- //
     function getDigest(
-        uint256 _campaignId,
         address claimer,
         address beneficiary,
         bytes32[] memory transactionHashes,
@@ -246,7 +189,6 @@ contract SignatureRebatesBatchTest is Test {
                 keccak256(
                     abi.encode(
                         ClaimableHash.CLAIMABLE_TYPEHASH,
-                        _campaignId,
                         claimer,
                         beneficiary,
                         keccak256(abi.encodePacked(transactionHashes)),
@@ -258,18 +200,13 @@ contract SignatureRebatesBatchTest is Test {
         );
     }
 
-    function fuzzHelper(
-        uint256 campaign,
-        address beneficiary,
-        address recipient,
-        uint256 amount,
-        uint8 numHashes,
-        uint256 seed
-    ) internal view returns (uint256, bytes32[] memory, uint256, bytes32) {
+    function fuzzHelper(uint256 amount, uint8 numHashes, uint256 seed)
+        internal
+        view
+        returns (uint256, bytes32[] memory)
+    {
         vm.assume(0 < numHashes);
-        vm.assume(recipient != address(rebates));
-        (,, uint256 rewardSupply,,) = rebates.campaigns(campaign);
-        amount = bound(amount, 1 wei, rewardSupply);
+        amount = bound(amount, 1 wei, address(rebates).balance);
 
         // manually generate pseudo random transaction hashes because fuzzer was producing
         // arrays with duplicates
@@ -278,26 +215,24 @@ contract SignatureRebatesBatchTest is Test {
             transactionHashes[i] = keccak256(abi.encode(seed, i));
         }
 
-        bytes32 digest = getDigest(campaign, address(this), beneficiary, transactionHashes, block.number, amount);
-        return (amount, transactionHashes, block.number, digest);
+        return (amount, transactionHashes);
     }
 
     /// @dev a mock signer that returns a valid signature for claims
     function mockSigner(
         uint256 signerPK,
-        uint256 _campaignId,
         address claimer,
         address beneficiary,
         bytes32[] memory transactionHashes,
         uint256 amount // MOCK: backend to calculate this from transactionHash event data
-    ) internal view returns (bytes memory signature) {
+    ) internal view returns (bytes memory signature, uint256 lastBlockNumber) {
         // MOCK: backend to extract the lastBlockNumber from transactionHashes
-        uint256 lastBlockNumber = block.number;
+        lastBlockNumber = block.number;
 
         // MOCK: backend to verify that beneficiary has specified the claimer
         // require(claimer == IRebateClaimer(beneficiary).rebateClaimer(), "INVALID_CLAIMER");
 
-        bytes32 digest = getDigest(_campaignId, claimer, beneficiary, transactionHashes, lastBlockNumber, amount);
+        bytes32 digest = getDigest(claimer, beneficiary, transactionHashes, lastBlockNumber, amount);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPK, digest);
         signature = abi.encodePacked(r, s, v);

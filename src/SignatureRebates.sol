@@ -6,12 +6,12 @@ import {Owned} from "solmate/src/auth/Owned.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
 import {EIP712} from "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 
-import {Rebates} from "./base/Rebates.sol";
 import {IRebateClaimer} from "./base/IRebateClaimer.sol";
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
+import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 import "forge-std/console2.sol";
 
-contract SignatureRebates is Rebates, EIP712, Owned {
+contract SignatureRebates is EIP712, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
@@ -19,15 +19,20 @@ contract SignatureRebates is Rebates, EIP712, Owned {
     /// @dev Thrown when claiming the rebate with a block number prior to the last claimed block number
     error InvalidBlockNumber();
 
-    /// @dev Thrown when calling claimBatch with an empty list of transaction hashes
+    /// @dev Thrown when calling claimWithSignature with an empty list of transaction hashes
     error EmptyHashes();
+
+    uint256 public rebatePerSwap = 10_000;
+    uint256 public rebatePerHook = 0;
+    address public signer;
 
     mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
 
-    constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {}
+    constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {
+        signer = _owner;
+    }
 
     function claimWithSignature(
-        uint256 campaignId,
         address beneficiary,
         address recipient,
         uint256 amount,
@@ -40,17 +45,27 @@ contract SignatureRebates is Rebates, EIP712, Owned {
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest =
-            ClaimableHash.hashClaimable(campaignId, msg.sender, beneficiary, transactionHashes, lastBlockNumber, amount);
-        signature.verify(_hashTypedDataV4(digest), campaigns[campaignId].owner);
+            ClaimableHash.hashClaimable(msg.sender, beneficiary, transactionHashes, lastBlockNumber, amount);
+        signature.verify(_hashTypedDataV4(digest), signer);
 
         // consume the block number to prevent replaying claims
         lastBlockClaimed[beneficiary] = lastBlockNumber;
 
         // send amount to recipient
-        _claim(campaignId, amount, recipient);
+        CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
     }
 
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
+    }
+
+    function setRebate(uint256 _rebatePerSwap, uint256 _rebatePerHook) external onlyOwner {
+        rebatePerSwap = _rebatePerSwap;
+        rebatePerHook = _rebatePerHook;
+    }
+
+    function setSigner(address _signer) external onlyOwner {
+        require(signer != address(0));
+        signer = _signer;
     }
 }
