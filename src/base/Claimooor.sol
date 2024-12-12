@@ -19,9 +19,7 @@ abstract contract Claimooor is IRebateClaimer {
         uint256 lastBlockNumber,
         bytes calldata signature
     ) external {
-        rebates.claimWithSignature(
-            address(this), recipient, amount, transactionHashes, lastBlockNumber, signature
-        );
+        rebates.claimWithSignature(address(this), recipient, amount, transactionHashes, lastBlockNumber, signature);
     }
 
     function rebateClaimer() external view override returns (address) {
