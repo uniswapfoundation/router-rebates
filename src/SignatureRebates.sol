@@ -46,6 +46,7 @@ contract SignatureRebates is EIP712, Owned {
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest =
             ClaimableHash.hashClaimable(msg.sender, beneficiary, transactionHashes, lastBlockNumber, amount);
+        console2.log("signer", signer);
         signature.verify(_hashTypedDataV4(digest), signer);
 
         // consume the block number to prevent replaying claims
@@ -65,6 +66,7 @@ contract SignatureRebates is EIP712, Owned {
     }
 
     function setSigner(address _signer) external onlyOwner {
+        require(signer != address(0));
         signer = _signer;
     }
 }

@@ -30,10 +30,11 @@ contract SignatureRebatesTest is Test {
     function setUp() public {
         token = new MockERC20("TOKEN", "TKN", 18);
         rebates = new SignatureRebates("REBATES", address(this));
-        rebates.setSigner(alice);
 
         (alice, alicePK) = makeAddrAndKey("ALICE");
         (bob, bobPK) = makeAddrAndKey("BOB");
+
+        rebates.setSigner(alice);
 
         uint256 tokenAmount = 10_000e18;
         token.mint(address(this), tokenAmount);
@@ -84,6 +85,8 @@ contract SignatureRebatesTest is Test {
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
         (bytes memory signature, uint256 lastBlockNumber) =
             mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
+        console2.log("signer()", rebates.signer());
+        console2.log(alice);
 
         uint256 recipientBalanceBefore = token.balanceOf(recipient);
 
@@ -159,8 +162,8 @@ contract SignatureRebatesTest is Test {
         );
     }
 
-    /// @dev re-using a hash reverts
-    function test_signature_replay_hashUsed_revert(
+    /// @dev re-using a signature reverts on invalid block number
+    function test_signature_replay_revert(
         address beneficiary,
         uint8 numHashes,
         uint256 seed,
@@ -289,4 +292,6 @@ contract SignatureRebatesTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPK, digest);
         signature = abi.encodePacked(r, s, v);
     }
+
+    // TODO: receive() external payable {}
 }
