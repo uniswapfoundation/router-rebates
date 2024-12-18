@@ -79,7 +79,8 @@ contract SignatureRebates is EIP712, Owned {
     }
 
     function claimWithZkProof(
-        address receiver, // eth will be sent to this address
+        uint64 chainid, // swaps happened on this chainid, ie. 1 for eth mainnet
+        address recipient, // eth will be sent to this address
         bytes calldata _proof,
         bytes[] calldata _appCircuitOutputs,
         bytes32[] calldata _proofIds,
@@ -89,19 +90,19 @@ contract SignatureRebates is EIP712, Owned {
         if (_appCircuitOutputs.length == 1 ) {
             bytes calldata _appOutput = _appCircuitOutputs[0];
             // check proof
-            (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(uint64(block.chainid), _proof);
+            (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
             require(appVkHash == vkHash, "mismatch vkhash");
             require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
             amount = handleOutput(_appOutput);
             if(amount > 0 ) {
-                (bool sent, ) = receiver.call{value: amount}("");
+                (bool sent, ) = recipient.call{value: amount}("");
                 require(sent, "failed to send eth");
             }
             return;
         }
         // batch mode
-        brvProof.submitAggProof(uint64(block.chainid), _proofIds, _proof);
-        brvProof.validateAggProofData(uint64(block.chainid), _proofDataArray);
+        brvProof.submitAggProof(chainid, _proofIds, _proof);
+        brvProof.validateAggProofData(chainid, _proofDataArray);
         // verify data and output
         for (uint256 i=0;i<_proofIds.length;i++) {
             require(_proofDataArray[i].appVkHash == vkHash, "mismatch vkhash");
@@ -110,36 +111,24 @@ contract SignatureRebates is EIP712, Owned {
             amount += handleOutput(_appCircuitOutputs[i]);
         }
         if(amount > 0) {
-            (bool sent, ) = receiver.call{value: amount}("");
+            (bool sent, ) = recipient.call{value: amount}("");
             require(sent, "failed to send eth");
         }
     }
 
     // parse _appOutput, return total eth amount
-    // one output has addr(20), [poolid(32), fromblk(8), toblk(8), eth amount(16)]
-    // circuit will ensure poolid is valid ie. PoolKey.hooks is non-zero
+    // one output has router(20), claimer(20), fromblk(8), toblk(8), eth amount(16)
     function handleOutput(bytes calldata _appOutput) internal returns (uint256) {
-        uint256 amount = 0;
-        require(_appOutput.length >= 84, "not enough app output");
-        require((_appOutput.length-20) % 64 == 0, "incorrect app output");
-    
-        // sender is msg.sender for Swap
-        address sender = address(bytes20(_appOutput[0:20]));
-        require(msg.sender==sender, "mismatch msg.sender and circuit output");
-
-        for (uint256 idx=20;idx<_appOutput.length;idx+=64) {
-            bytes32 poolid = bytes32(_appOutput[idx:idx+32]);
-            if(poolid == 0) {
-                break; // circuit may have zero fillings due to fixed length, ends loop early to save gas
-            }
-            uint64 beginBlk = uint64(bytes8(_appOutput[idx+32:idx+40]));
-            uint64 endBlk = uint64(bytes8(_appOutput[idx+40:idx+48]));
-            if(beginBlk>lastBlockNum[sender][poolid]) {
-                lastBlockNum[sender][poolid] = endBlk;
-                amount += uint128(bytes16(_appOutput[68:84]));
-            }
-        }
-        return amount;
+        require(_appOutput.length == 72, "incorrect app output length");
+        // router is msg.sender for Swap
+        address router = address(bytes20(_appOutput[0:20]));
+        address claimer = address(bytes20(_appOutput[20:40]));
+        require(msg.sender == claimer, "msg.sender is not authorized claimer");
+        uint64 beginBlk = uint64(bytes8(_appOutput[40:48]));
+        uint64 endBlk = uint64(bytes8(_appOutput[48:56]));
+        require(beginBlk>lastBlockClaimed[router], "begin blocknum too small");
+        lastBlockClaimed[router] = endBlk;
+        return uint128(bytes16(_appOutput[56:72]));
     }
 
     // accept eth transfer
