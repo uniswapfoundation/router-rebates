@@ -9,6 +9,7 @@ import {EIP712} from "openzeppelin-contracts/contracts/utils/cryptography/EIP712
 import {IRebateClaimer} from "./base/IRebateClaimer.sol";
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
 import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
+import {IBrevisProof} from "./interfaces/IBrevisProof.sol";
 import "forge-std/console2.sol";
 
 contract SignatureRebates is EIP712, Owned {
@@ -25,6 +26,9 @@ contract SignatureRebates is EIP712, Owned {
     uint256 public rebatePerSwap = 10_000;
     uint256 public rebatePerHook = 0;
     address public signer;
+
+    IBrevisProof public brvProof;
+    bytes32 public vkHash; // ensure output is from expected zk circuit
 
     mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
 
@@ -68,4 +72,66 @@ contract SignatureRebates is EIP712, Owned {
         require(signer != address(0));
         signer = _signer;
     }
+
+    function setZkConfig(IBrevisProof _brvproof, bytes32 _vkHash) external onlyOwner {
+        brvProof = _brvproof;
+        vkHash = _vkHash;
+    }
+
+    function claimWithZkProof(
+        uint64 chainid, // swaps happened on this chainid, ie. 1 for eth mainnet
+        address recipient, // eth will be sent to this address
+        bytes calldata _proof,
+        bytes[] calldata _appCircuitOutputs,
+        bytes32[] calldata _proofIds,
+        IBrevisProof.ProofData[] calldata _proofDataArray
+    ) external {
+        uint256 amount = 0; // total eth
+        if (_appCircuitOutputs.length == 1 ) {
+            bytes calldata _appOutput = _appCircuitOutputs[0];
+            // check proof
+            (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
+            require(appVkHash == vkHash, "mismatch vkhash");
+            require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
+            amount = handleOutput(_appOutput);
+            if(amount > 0 ) {
+                (bool sent, ) = recipient.call{value: amount}("");
+                require(sent, "failed to send eth");
+            }
+            return;
+        }
+        // batch mode
+        brvProof.submitAggProof(chainid, _proofIds, _proof);
+        brvProof.validateAggProofData(chainid, _proofDataArray);
+        // verify data and output
+        for (uint256 i=0;i<_proofIds.length;i++) {
+            require(_proofDataArray[i].appVkHash == vkHash, "mismatch vkhash");
+            require(_proofDataArray[i].commitHash == _proofIds[i], "invalid proofId");
+            require(_proofDataArray[i].appCommitHash == keccak256(_appCircuitOutputs[i]), "invalid circuit output");
+            amount += handleOutput(_appCircuitOutputs[i]);
+        }
+        if(amount > 0) {
+            (bool sent, ) = recipient.call{value: amount}("");
+            require(sent, "failed to send eth");
+        }
+    }
+
+    // parse _appOutput, return total eth amount
+    // one output has router(20), claimer(20), fromblk(8), toblk(8), eth amount(16)
+    function handleOutput(bytes calldata _appOutput) internal returns (uint256) {
+        require(_appOutput.length == 72, "incorrect app output length");
+        // router is msg.sender for Swap
+        address router = address(bytes20(_appOutput[0:20]));
+        address claimer = address(bytes20(_appOutput[20:40]));
+        require(msg.sender == claimer, "msg.sender is not authorized claimer");
+        uint64 beginBlk = uint64(bytes8(_appOutput[40:48]));
+        uint64 endBlk = uint64(bytes8(_appOutput[48:56]));
+        require(beginBlk>lastBlockClaimed[router], "begin blocknum too small");
+        lastBlockClaimed[router] = endBlk;
+        return uint128(bytes16(_appOutput[56:72]));
+    }
+
+    // accept eth transfer
+    receive() external payable {}
+    fallback() external payable {}
 }
