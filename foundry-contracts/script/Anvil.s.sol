@@ -119,7 +119,7 @@ contract AnvilScript is Script {
     }
 
     function deployUniswapV4() internal {
-        manager = new PoolManager();
+        manager = new PoolManager(address(0));
         lpRouter = new PoolModifyLiquidityTest(manager);
         swapRouter = new PoolSwapTestClaimable(manager, rebates);
     }
@@ -136,7 +136,7 @@ contract AnvilScript is Script {
         _poolKey = PoolKey(
             Currency.wrap(address(token0)), Currency.wrap(address(token1)), 3000, tickSpacing, IHooks(hookAddress)
         );
-        manager.initialize(_poolKey, Constants.SQRT_PRICE_1_1, ZERO_BYTES);
+        manager.initialize(_poolKey, Constants.SQRT_PRICE_1_1);
 
         // add full range liquidity to the pool
         lpRouter.modifyLiquidity(
