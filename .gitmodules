@@ -7,3 +7,7 @@
 [submodule "foundry-contracts/lib/forge-std"]
 	path = foundry-contracts/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "brevis-zk"]
+	path = brevis-zk
+	url = https://github.com/brevis-network/uniswap-rebate.git
+	branch = v4
