@@ -1,18 +1,23 @@
 import { privateKeyToAccount } from "viem/accounts";
+import { publicClient } from "../test/utils/constants";
+import { createPublicClient, http, parseAbiItem } from "viem";
+import { mainnet } from "viem/chains";
 
 const types = {
-  ClaimableBatch: [
-    { name: "campaignId", type: "uint256" },
-    { name: "referrer", type: "address" },
+  Claimable: [
+    { name: "claimer", type: "address" },
+    { name: "beneficiary", type: "address" },
     { name: "transactionHashes", type: "bytes32[]" },
+    { name: "lastBlockNumber", type: "uint256" },
     { name: "amount", type: "uint256" },
   ],
 };
 
-export async function signBatch(
-  campaignId: bigint,
-  referrer: `0x${string}`,
+export async function sign(
+  claimer: `0x${string}`,
+  beneficiary: `0x${string}`,
   txnHashes: `0x${string}`[],
+  lastBlockNumber: bigint,
   amount: bigint
 ): Promise<`0x${string}`> {
   const account = privateKeyToAccount(
@@ -27,13 +32,28 @@ export async function signBatch(
       verifyingContract: process.env.REBATE_ADDRESS as `0x${string}`,
     },
     types: types,
-    primaryType: "ClaimableBatch",
+    primaryType: "Claimable",
     message: {
-      campaignId: campaignId,
-      referrer: referrer,
+      claimer: claimer,
+      beneficiary: beneficiary,
       transactionHashes: txnHashes.sort(),
+      lastBlockNumber: lastBlockNumber,
       amount: amount,
     },
   });
   return signature;
+}
+
+export async function getRebateClaimer(
+  beneficiary: `0x${string}`
+): Promise<`0x${string}`> {
+  const mainnetClient = createPublicClient({
+    chain: mainnet,
+    transport: http(process.env.MAINNET_RPC_URL),
+  });
+  return await mainnetClient.readContract({
+    address: beneficiary,
+    abi: [parseAbiItem("function rebateClaimer() view returns (address)")],
+    functionName: "rebateClaimer",
+  });
 }

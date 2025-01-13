@@ -1,18 +1,19 @@
 import { Database } from "bun:sqlite";
-import type { PublicClient } from "viem";
+import type { Address, PublicClient } from "viem";
 import { calculateRebate } from "./rebate";
-import { signBatch } from "./signer";
+import { getRebateClaimer, sign } from "./signer";
 
 export async function batch(
   db: Database,
   publicClient: PublicClient,
-  campaignId: bigint,
   txnHashes: `0x${string}`[]
-): Promise<{ signature: `0x${string}`; amount: string }> {
+): Promise<{
+  claimer: Address;
+  signature: `0x${string}`;
+  amount: string;
+}> {
   const result = await Promise.all(
-    txnHashes.map((txnHash) =>
-      calculateRebate(db, publicClient, campaignId, txnHash)
-    )
+    txnHashes.map((txnHash) => calculateRebate(db, publicClient, txnHash))
   );
   // TODO: error if multiple referrers
 
@@ -20,15 +21,17 @@ export async function batch(
     (total: bigint, data) => total + data.gasToRebate,
     0n
   );
+  const beneficiary: `0x${string}` = result[0].beneficiary;
+  const claimer = await getRebateClaimer(beneficiary);
+  const lastBlockNumber = BigInt(0);
 
-  // TODO: convert gas-rebate (ETH) to reward token
-
-  const signature = await signBatch(
-    campaignId,
-    result[0].referrer,
+  const signature = await sign(
+    claimer,
+    beneficiary,
     txnHashes,
+    lastBlockNumber,
     amount
   );
 
-  return { signature, amount: amount.toString() };
+  return { claimer, signature, amount: amount.toString() };
 }

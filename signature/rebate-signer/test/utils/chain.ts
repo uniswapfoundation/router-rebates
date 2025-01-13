@@ -1,8 +1,7 @@
 import { erc20Abi, type Address } from "viem";
 import { publicClient, wallet1, walletClient } from "./constants";
 
-import { abi as SignatureRebatesABI } from "../../../out/SignatureRebates.sol/SignatureRebates.json";
-import { abi as ClaimooorABI } from "../../../out/Claimooor.sol/Claimooor.json";
+import { abi as SignatureRebatesABI } from "../../../../foundry-contracts/out/SignatureRebates.sol/SignatureRebates.json";
 
 export async function rewardTokenBalanceOf(
   rewardTokenAddress: Address,

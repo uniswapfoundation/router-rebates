@@ -2,7 +2,7 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { anvil } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
-import ARTIFACT from "../../../broadcast/Anvil.s.sol/31337/run-latest.json";
+import ARTIFACT from "../../../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
 
 export const ANVIL_ARTIFACT = ARTIFACT;
 
