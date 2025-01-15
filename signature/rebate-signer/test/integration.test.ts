@@ -89,14 +89,6 @@ test("batch claim", async () => {
   //   wallet1.address
   // );
 
-  console.log("SUBMITTING");
-  console.log(wallet1.address, router01Address);
-  console.log(lastBlockNumber);
-  console.log(tokensClaimed);
-  console.log(signature);
-  console.log(keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])));
-  console.log("---");
-
   // wallet1 claims the rebate
   await claimWithSignature(
     rebateAddress,

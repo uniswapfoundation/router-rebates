@@ -46,13 +46,6 @@ export async function sign(
       amount: amount,
     },
   });
-  console.log("SIGNED");
-  console.log(claimer, beneficiary);
-  console.log(lastBlockNumber);
-  console.log(amount);
-  console.log(signature);
-  console.log(keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])));
-  console.log("----------------");
   return signature;
 }
 
