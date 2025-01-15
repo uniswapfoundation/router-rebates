@@ -1,4 +1,4 @@
-import { erc20Abi, type Address } from "viem";
+import { encodePacked, erc20Abi, keccak256, type Address } from "viem";
 import { publicClient, wallet1, walletClient } from "./constants";
 
 import { abi as SignatureRebatesABI } from "../../../../foundry-contracts/out/SignatureRebates.sol/SignatureRebates.json";

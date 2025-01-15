@@ -1,13 +1,18 @@
 import { privateKeyToAccount } from "viem/accounts";
-import { publicClient } from "../test/utils/constants";
-import { createPublicClient, http, parseAbiItem } from "viem";
+import {
+  createPublicClient,
+  encodePacked,
+  http,
+  keccak256,
+  parseAbiItem,
+} from "viem";
 import { mainnet } from "viem/chains";
 
 const types = {
   Claimable: [
     { name: "claimer", type: "address" },
     { name: "beneficiary", type: "address" },
-    { name: "transactionHashes", type: "bytes32[]" },
+    { name: "hashedTxns", type: "bytes32" },
     { name: "lastBlockNumber", type: "uint256" },
     { name: "amount", type: "uint256" },
   ],
@@ -36,11 +41,18 @@ export async function sign(
     message: {
       claimer: claimer,
       beneficiary: beneficiary,
-      transactionHashes: txnHashes.sort(),
+      hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])),
       lastBlockNumber: lastBlockNumber,
       amount: amount,
     },
   });
+  console.log("SIGNED");
+  console.log(claimer, beneficiary);
+  console.log(lastBlockNumber);
+  console.log(amount);
+  console.log(signature);
+  console.log(keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])));
+  console.log("----------------");
   return signature;
 }
 

@@ -1,5 +1,5 @@
 import { expect, test, beforeAll } from "bun:test";
-import { parseGwei, type Address } from "viem";
+import { encodePacked, keccak256, parseGwei, type Address } from "viem";
 
 import ANVIL_ARTIFACT from "../../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
 import { getContractAddressByContractName } from "./utils/addresses";
@@ -89,8 +89,13 @@ test("batch claim", async () => {
   //   wallet1.address
   // );
 
+  console.log("SUBMITTING");
+  console.log(wallet1.address, router01Address);
   console.log(lastBlockNumber);
+  console.log(tokensClaimed);
   console.log(signature);
+  console.log(keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])));
+  console.log("---");
 
   // wallet1 claims the rebate
   await claimWithSignature(
