@@ -26,7 +26,7 @@ Bun.serve({
     } else {
       // TODO: proper 404?
       return new Response(
-        "Invalid URL. Must be /sign?chainId=1&campaignId=1&txnHashes=0x123,0x456"
+        "Invalid URL. Must be /sign?chainId=1&txnHashes=0x123,0x456"
       );
     }
   },

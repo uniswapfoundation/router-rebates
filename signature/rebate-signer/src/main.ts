@@ -11,6 +11,7 @@ export async function batch(
   claimer: Address;
   signature: `0x${string}`;
   amount: string;
+  lastBlockNumber: string;
 }> {
   const result = await Promise.all(
     txnHashes.map((txnHash) => calculateRebate(db, publicClient, txnHash))
@@ -23,7 +24,7 @@ export async function batch(
   );
   const beneficiary: `0x${string}` = result[0].beneficiary;
   const claimer = await getRebateClaimer(beneficiary);
-  const lastBlockNumber = BigInt(0);
+  const lastBlockNumber = BigInt(88888);
 
   const signature = await sign(
     claimer,
@@ -33,5 +34,10 @@ export async function batch(
     amount
   );
 
-  return { claimer, signature, amount: amount.toString() };
+  return {
+    claimer,
+    signature,
+    amount: amount.toString(),
+    lastBlockNumber: lastBlockNumber.toString(),
+  };
 }

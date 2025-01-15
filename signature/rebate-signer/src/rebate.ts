@@ -58,7 +58,6 @@ export async function calculateRebate(
       // check if poolId has hooks
       const query = db.query(`SELECT hooks FROM PoolIdMap WHERE id = $poolId;`);
       let record = query.get({ $poolId: id });
-      console.log(record);
       if (record === null) record = { hooks: zeroAddress };
 
       return (record as { hooks: Address }).hooks === zeroAddress
