@@ -23,7 +23,7 @@ contract SignatureRebates is EIP712, Owned {
     /// @dev Thrown when calling claimWithSignature with an empty list of transaction hashes
     error EmptyHashes();
 
-    uint256 public rebatePerSwap = 10_000;
+    uint256 public rebatePerSwap = 20_000;
     uint256 public rebatePerHook = 0;
     address public signer;
 

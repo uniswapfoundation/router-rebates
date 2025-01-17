@@ -1,8 +1,8 @@
 import { createConfig } from "@ponder/core";
 import { http } from "viem";
 
-import { abi as PoolManagerAbi } from "../out/PoolManager.sol/PoolManager.json";
-import { transactions } from "../broadcast/Anvil.s.sol/31337/run-latest.json";
+import { abi as PoolManagerAbi } from "../../foundry-contracts/out/PoolManager.sol/PoolManager.json";
+import { transactions } from "../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
 
 export default createConfig({
   networks: {

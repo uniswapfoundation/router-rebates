@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import {
   parseAbi,
+  parseAbiItem,
   parseEventLogs,
   zeroAddress,
   type Address,
@@ -21,14 +22,10 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 export async function calculateRebate(
   db: Database,
   client: PublicClient,
-  campaignId: bigint,
   txnHash: `0x${string}`
-): Promise<{ referrer: Address; gasToRebate: bigint }> {
-  const campaign = await getCampaign(
-    process.env.REBATE_ADDRESS as `0x${string}`,
-    campaignId
-  );
+): Promise<{ beneficiary: Address; gasToRebate: bigint }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
+  const { rebatePerSwap, rebatePerHook } = await getRebatePerEvent(client);
 
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
@@ -41,9 +38,11 @@ export async function calculateRebate(
     logs: txnReceipt.logs,
   }).filter((log) => log.eventName === "Swap");
 
-  // TODO: handle txnHashes without swap event
+  if (swapEvents.length === 0) {
+    return { beneficiary: zeroAddress, gasToRebate: 0n };
+  }
 
-  const referrer: Address = swapEvents[0].args.sender;
+  const beneficiary: Address = swapEvents[0].args.sender;
 
   // note: within a transaction hash there may be multiple swap routers
   // this is different than signing for a batch of transaction hashes
@@ -59,12 +58,11 @@ export async function calculateRebate(
       // check if poolId has hooks
       const query = db.query(`SELECT hooks FROM PoolIdMap WHERE id = $poolId;`);
       let record = query.get({ $poolId: id });
-      console.log(record);
       if (record === null) record = { hooks: zeroAddress };
 
       return (record as { hooks: Address }).hooks === zeroAddress
         ? gasUsedToRebate
-        : gasUsedToRebate + campaign.gasPerSwap + campaign.maxGasPerHook;
+        : gasUsedToRebate + rebatePerSwap + rebatePerHook;
     },
     0n
   );
@@ -74,5 +72,21 @@ export async function calculateRebate(
       ? (txnReceipt.gasUsed * 90n) / 100n // rebate a max of 90% of gasUsed
       : gasUsedToRebate;
 
-  return { referrer, gasToRebate: gasUsedToRebate * gasPrice };
+  return { beneficiary, gasToRebate: gasUsedToRebate * gasPrice };
+}
+
+async function getRebatePerEvent(
+  client: PublicClient
+): Promise<{ rebatePerSwap: bigint; rebatePerHook: bigint }> {
+  const rebatePerSwap = await client.readContract({
+    address: process.env.REBATE_ADDRESS as Address,
+    abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],
+    functionName: "rebatePerSwap",
+  });
+  const rebatePerHook = await client.readContract({
+    address: process.env.REBATE_ADDRESS as Address,
+    abi: [parseAbiItem("function rebatePerHook() view returns (uint256)")],
+    functionName: "rebatePerHook",
+  });
+  return { rebatePerSwap, rebatePerHook };
 }

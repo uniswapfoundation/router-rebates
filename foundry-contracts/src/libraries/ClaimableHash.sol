@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library ClaimableHash {
     bytes32 constant CLAIMABLE_TYPEHASH = keccak256(
-        "Claimable(address claimer,address beneficiary,bytes32[] transactionHashes,uint256 lastBlockNumber,uint256 amount)"
+        "Claimable(address claimer,address beneficiary,bytes32 hashedTxns,uint256 lastBlockNumber,uint256 amount)"
     );
 
     function hashClaimable(
