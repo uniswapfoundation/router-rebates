@@ -46,11 +46,9 @@ contract SignatureRebates is EIP712, Owned {
         address recipient,
         uint256 amount,
         bytes32[] calldata transactionHashes,
-        uint256 startBlockNumber,
-        uint256 endBlockNumber,
+        BlockNumberRange calldata blockRange,
         bytes calldata signature
     ) external {
-        BlockNumberRange memory blockRange = BlockNumberRange(uint128(startBlockNumber), uint128(endBlockNumber));
         if (transactionHashes.length == 0) revert EmptyHashes();
         // startBlockNumber must be less than endBlockNumber
         if (blockRange.startBlockNumber >= blockRange.endBlockNumber) revert InvalidBlockNumber();
@@ -58,7 +56,7 @@ contract SignatureRebates is EIP712, Owned {
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest = ClaimableHash.hashClaimable(
-            msg.sender, beneficiary, transactionHashes, startBlockNumber, endBlockNumber, amount
+            msg.sender, beneficiary, transactionHashes, blockRange.startBlockNumber, blockRange.endBlockNumber, amount
         );
         signature.verify(_hashTypedDataV4(digest), signer);
 

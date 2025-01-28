@@ -14,8 +14,8 @@ const types = {
     { name: "claimer", type: "address" },
     { name: "beneficiary", type: "address" },
     { name: "hashedTxns", type: "bytes32" },
-    { name: "startBlockNumber", type: "uint256" },
-    { name: "endBlockNumber", type: "uint256" },
+    { name: "startBlockNumber", type: "uint128" },
+    { name: "endBlockNumber", type: "uint128" },
     { name: "amount", type: "uint256" },
   ],
 };

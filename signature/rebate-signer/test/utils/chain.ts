@@ -23,8 +23,10 @@ export async function claimWithSignature(
       recipient,
       amount,
       txnHashes,
-      startBlockNumber,
-      endBlockNumber,
+      {
+        startBlockNumber: startBlockNumber,
+        endBlockNumber: endBlockNumber,
+      },
       signature,
     ],
   });
