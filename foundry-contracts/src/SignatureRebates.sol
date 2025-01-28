@@ -12,6 +12,11 @@ import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 import {IBrevisProof} from "./interfaces/IBrevisProof.sol";
 import "forge-std/console2.sol";
 
+struct BlockNumberRange {
+    uint128 startBlockNumber;
+    uint128 endBlockNumber;
+}
+
 contract SignatureRebates is EIP712, Owned {
     using SignatureVerification for bytes;
 
@@ -41,19 +46,22 @@ contract SignatureRebates is EIP712, Owned {
         address recipient,
         uint256 amount,
         bytes32[] calldata transactionHashes,
-        uint256 lastBlockNumber,
+        BlockNumberRange calldata blockRange,
         bytes calldata signature
     ) external {
         if (transactionHashes.length == 0) revert EmptyHashes();
-        if (lastBlockNumber <= lastBlockClaimed[beneficiary]) revert InvalidBlockNumber();
+        // startBlockNumber must be less than endBlockNumber
+        if (blockRange.startBlockNumber >= blockRange.endBlockNumber) revert InvalidBlockNumber();
+        if (blockRange.startBlockNumber < lastBlockClaimed[beneficiary]) revert InvalidBlockNumber();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
-        bytes32 digest =
-            ClaimableHash.hashClaimable(msg.sender, beneficiary, transactionHashes, lastBlockNumber, amount);
+        bytes32 digest = ClaimableHash.hashClaimable(
+            msg.sender, beneficiary, transactionHashes, blockRange.startBlockNumber, blockRange.endBlockNumber, amount
+        );
         signature.verify(_hashTypedDataV4(digest), signer);
 
         // consume the block number to prevent replaying claims
-        lastBlockClaimed[beneficiary] = lastBlockNumber;
+        lastBlockClaimed[beneficiary] = blockRange.endBlockNumber - 1;
 
         // send amount to recipient
         CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
@@ -87,15 +95,15 @@ contract SignatureRebates is EIP712, Owned {
         IBrevisProof.ProofData[] calldata _proofDataArray
     ) external {
         uint256 amount = 0; // total eth
-        if (_appCircuitOutputs.length == 1 ) {
+        if (_appCircuitOutputs.length == 1) {
             bytes calldata _appOutput = _appCircuitOutputs[0];
             // check proof
             (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
             require(appVkHash == vkHash, "mismatch vkhash");
             require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
             amount = handleOutput(_appOutput);
-            if(amount > 0 ) {
-                (bool sent, ) = recipient.call{value: amount}("");
+            if (amount > 0) {
+                (bool sent,) = recipient.call{value: amount}("");
                 require(sent, "failed to send eth");
             }
             return;
@@ -104,14 +112,14 @@ contract SignatureRebates is EIP712, Owned {
         brvProof.submitAggProof(chainid, _proofIds, _proof);
         brvProof.validateAggProofData(chainid, _proofDataArray);
         // verify data and output
-        for (uint256 i=0;i<_proofIds.length;i++) {
+        for (uint256 i = 0; i < _proofIds.length; i++) {
             require(_proofDataArray[i].appVkHash == vkHash, "mismatch vkhash");
             require(_proofDataArray[i].commitHash == _proofIds[i], "invalid proofId");
             require(_proofDataArray[i].appCommitHash == keccak256(_appCircuitOutputs[i]), "invalid circuit output");
             amount += handleOutput(_appCircuitOutputs[i]);
         }
-        if(amount > 0) {
-            (bool sent, ) = recipient.call{value: amount}("");
+        if (amount > 0) {
+            (bool sent,) = recipient.call{value: amount}("");
             require(sent, "failed to send eth");
         }
     }
@@ -126,7 +134,7 @@ contract SignatureRebates is EIP712, Owned {
         require(msg.sender == claimer, "msg.sender is not authorized claimer");
         uint64 beginBlk = uint64(bytes8(_appOutput[40:48]));
         uint64 endBlk = uint64(bytes8(_appOutput[48:56]));
-        require(beginBlk>lastBlockClaimed[router], "begin blocknum too small");
+        require(beginBlk > lastBlockClaimed[router], "begin blocknum too small");
         lastBlockClaimed[router] = endBlk;
         return uint128(bytes16(_appOutput[56:72]));
     }

@@ -11,12 +11,12 @@ export async function batch(
   claimer: Address;
   signature: `0x${string}`;
   amount: string;
-  lastBlockNumber: string;
+  startBlockNumber: string;
+  endBlockNumber: string;
 }> {
   const result = await Promise.all(
     txnHashes.map((txnHash) => calculateRebate(db, publicClient, txnHash))
   );
-  // TODO: error if multiple referrers
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,
@@ -24,13 +24,21 @@ export async function batch(
   );
   const beneficiary: `0x${string}` = result[0].beneficiary;
   const claimer = await getRebateClaimer(beneficiary);
-  const lastBlockNumber = BigInt(88888);
+  const startBlockNumber = result.reduce(
+    (min: bigint, data) => (data.blockNumber < min ? data.blockNumber : min),
+    result[0].blockNumber
+  );
+  const endBlockNumber = result.reduce(
+    (max: bigint, data) => (data.blockNumber > max ? data.blockNumber : max),
+    result[0].blockNumber
+  );
 
   const signature = await sign(
     claimer,
     beneficiary,
     txnHashes,
-    lastBlockNumber,
+    startBlockNumber,
+    endBlockNumber,
     amount
   );
 
@@ -38,6 +46,7 @@ export async function batch(
     claimer,
     signature,
     amount: amount.toString(),
-    lastBlockNumber: lastBlockNumber.toString(),
+    startBlockNumber: startBlockNumber.toString(),
+    endBlockNumber: endBlockNumber.toString(),
   };
 }

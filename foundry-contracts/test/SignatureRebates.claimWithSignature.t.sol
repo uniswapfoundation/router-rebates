@@ -8,7 +8,7 @@ import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
 
 import {ClaimableHash} from "../src/libraries/ClaimableHash.sol";
-import {SignatureRebates} from "../src/SignatureRebates.sol";
+import {BlockNumberRange, SignatureRebates} from "../src/SignatureRebates.sol";
 import {IRebateClaimer} from "../src/base/IRebateClaimer.sol";
 
 contract SignatureRebatesTest is Test {
@@ -42,7 +42,7 @@ contract SignatureRebatesTest is Test {
         assertEq(
             ClaimableHash.CLAIMABLE_TYPEHASH,
             keccak256(
-                "Claimable(address claimer,address beneficiary,bytes32 hashedTxns,uint256 lastBlockNumber,uint256 amount)"
+                "Claimable(address claimer,address beneficiary,bytes32 hashedTxns,uint128 startBlockNumber,uint128 endBlockNumber,uint256 amount)"
             )
         );
     }
@@ -51,18 +51,22 @@ contract SignatureRebatesTest is Test {
         address claimer,
         address beneficiary,
         bytes32[] calldata transactionHashes,
-        uint256 lastBlockNumber,
+        uint128 startBlockNumber,
+        uint128 endBlockNumber,
         uint256 amount
     ) public pure {
         assertEq(
-            ClaimableHash.hashClaimable(claimer, beneficiary, transactionHashes, lastBlockNumber, amount),
+            ClaimableHash.hashClaimable(
+                claimer, beneficiary, transactionHashes, startBlockNumber, endBlockNumber, amount
+            ),
             keccak256(
                 abi.encode(
                     ClaimableHash.CLAIMABLE_TYPEHASH,
                     claimer,
                     beneficiary,
                     keccak256(abi.encodePacked(transactionHashes)),
-                    lastBlockNumber,
+                    startBlockNumber,
+                    endBlockNumber,
                     amount
                 )
             )
@@ -75,12 +79,19 @@ contract SignatureRebatesTest is Test {
         address recipient = address(1);
         vm.assume(recipient.code.length == 0);
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
-        (bytes memory signature, uint256 lastBlockNumber) =
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
     }
@@ -95,13 +106,20 @@ contract SignatureRebatesTest is Test {
         address recipient = address(1);
         vm.assume(recipient.code.length == 0);
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
-        (bytes memory signature, uint256 lastBlockNumber) =
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(alicePK, bob, beneficiary, transactionHashes, amount);
 
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
         vm.prank(bob);
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
     }
@@ -118,11 +136,18 @@ contract SignatureRebatesTest is Test {
         vm.assume(0 < signerPK);
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
 
-        (bytes memory signature, uint256 lastBlockNumber) =
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(signerPK, address(this), beneficiary, transactionHashes, amount);
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
     }
 
     /// @dev re-using a signature reverts on invalid block number
@@ -130,31 +155,166 @@ contract SignatureRebatesTest is Test {
         address recipient = address(1);
         vm.assume(recipient.code.length == 0);
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
-        (bytes memory signature, uint256 lastBlockNumber) =
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
 
         // signature cannot be re-used
         vm.expectRevert(InvalidBlockNumber.selector);
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
+    }
+
+    /// @dev Two valid signatures on block range [100, 151) and [150, 200) is valid
+    function test_perfect_block_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
+        address recipient = address(1);
+        vm.assume(recipient.code.length == 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
+            mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
+        assertEq(startBlockNumber, 100);
+        assertEq(endBlockNumber, 151);
+
+        uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
+
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
+        assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
+
+        // top up the balance
+        vm.deal(address(rebates), amount);
+
+        // a new valid signature with perfect block range
+        startBlockNumber = endBlockNumber - 1;
+        assertEq(startBlockNumber, 150);
+        endBlockNumber = 200;
+        bytes32 digest =
+            getDigest(address(this), beneficiary, transactionHashes, startBlockNumber, endBlockNumber, amount);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        signature = abi.encodePacked(r, s, v);
+
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
+    }
+
+    /// @dev A valid signature with overlapping blocks will revert
+    function test_block_overlap0_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
+        address recipient = address(1);
+        vm.assume(recipient.code.length == 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
+            mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
+
+        uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
+
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
+        assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
+
+        // a new valid signature with overlapping blocks cannot be used
+        startBlockNumber = 149;
+        endBlockNumber = 200;
+        bytes32 digest =
+            getDigest(address(this), beneficiary, transactionHashes, startBlockNumber, endBlockNumber, amount);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        signature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(InvalidBlockNumber.selector);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
+    }
+
+    /// @dev A valid signature with unordered blocks is invalid
+    function test_unordered_blockNumber_revert(
+        address beneficiary,
+        uint8 numHashes,
+        uint256 seed,
+        uint256 _amount,
+        uint128 startBlockNumber,
+        uint128 endBlockNumber
+    ) public {
+        vm.assume(endBlockNumber <= startBlockNumber);
+        address recipient = address(1);
+        vm.assume(recipient.code.length == 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+
+        // a new valid signature but unordered block number is invalid
+        bytes32 digest =
+            getDigest(address(this), beneficiary, transactionHashes, startBlockNumber, endBlockNumber, amount);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(InvalidBlockNumber.selector);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
     }
 
     /// @dev taking more than allowable amount reverts
     function test_amount_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
         address recipient = address(1);
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
-        (bytes memory signature, uint256 lastBlockNumber) =
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
         // attempt to claim more than what was signed
         amount = bound(amount, amount + 1, type(uint256).max);
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
     }
 
     /// @dev taking more than reward supply reverts
@@ -164,13 +324,20 @@ contract SignatureRebatesTest is Test {
 
         uint256 amount = bound(_amount, address(rebates).balance + 1, type(uint256).max);
 
-        (bytes memory signature, uint256 lastBlockNumber) =
+        (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
 
         // revert if claiming more than reward supply
         vm.expectRevert();
         vm.prank(beneficiary);
-        rebates.claimWithSignature(beneficiary, recipient, amount, transactionHashes, lastBlockNumber, signature);
+        rebates.claimWithSignature(
+            beneficiary,
+            recipient,
+            amount,
+            transactionHashes,
+            BlockNumberRange(startBlockNumber, endBlockNumber),
+            signature
+        );
     }
 
     // --- Helpers --- //
@@ -178,7 +345,8 @@ contract SignatureRebatesTest is Test {
         address claimer,
         address beneficiary,
         bytes32[] memory transactionHashes,
-        uint256 lastBlockNumber,
+        uint128 startBlockNumber,
+        uint128 endBlockNumber,
         uint256 amount
     ) internal view returns (bytes32 digest) {
         // need to keccak256/encodePacked transactionHashes, according to EIP712, as its a dynamic type
@@ -192,7 +360,8 @@ contract SignatureRebatesTest is Test {
                         claimer,
                         beneficiary,
                         keccak256(abi.encodePacked(transactionHashes)),
-                        lastBlockNumber,
+                        startBlockNumber,
+                        endBlockNumber,
                         amount
                     )
                 )
@@ -225,14 +394,15 @@ contract SignatureRebatesTest is Test {
         address beneficiary,
         bytes32[] memory transactionHashes,
         uint256 amount // MOCK: backend to calculate this from transactionHash event data
-    ) internal view returns (bytes memory signature, uint256 lastBlockNumber) {
-        // MOCK: backend to extract the lastBlockNumber from transactionHashes
-        lastBlockNumber = block.number;
+    ) internal view returns (bytes memory signature, uint128 startBlockNumber, uint128 endBlockNumber) {
+        // MOCK: backend to extract the first and last block number from transactionHashes
+        startBlockNumber = 100;
+        endBlockNumber = 151; // end block number is exclusive; so user is claiming for blocks [100, 150]
 
         // MOCK: backend to verify that beneficiary has specified the claimer
         // require(claimer == IRebateClaimer(beneficiary).rebateClaimer(), "INVALID_CLAIMER");
 
-        bytes32 digest = getDigest(claimer, beneficiary, transactionHashes, lastBlockNumber, amount);
+        bytes32 digest = getDigest(claimer, beneficiary, transactionHashes, startBlockNumber, endBlockNumber, amount);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPK, digest);
         signature = abi.encodePacked(r, s, v);

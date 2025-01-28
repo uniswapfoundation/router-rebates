@@ -9,7 +9,8 @@ export async function claimWithSignature(
   recipient: Address,
   amount: bigint,
   txnHashes: `0x${string}`[],
-  lastBlockNumber: bigint,
+  startBlockNumber: bigint,
+  endBlockNumber: bigint,
   signature: `0x${string}`
 ) {
   const { request } = await publicClient.simulateContract({
@@ -22,7 +23,10 @@ export async function claimWithSignature(
       recipient,
       amount,
       txnHashes,
-      lastBlockNumber,
+      {
+        startBlockNumber: startBlockNumber,
+        endBlockNumber: endBlockNumber,
+      },
       signature,
     ],
   });

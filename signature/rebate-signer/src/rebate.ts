@@ -8,7 +8,6 @@ import {
   type PublicClient,
   type TransactionReceipt,
 } from "viem";
-import { getCampaign } from "../test/utils/chain";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -23,7 +22,12 @@ export async function calculateRebate(
   db: Database,
   client: PublicClient,
   txnHash: `0x${string}`
-): Promise<{ beneficiary: Address; gasToRebate: bigint }> {
+): Promise<{
+  beneficiary: Address;
+  gasToRebate: bigint;
+  txnHash: `0x${string}`;
+  blockNumber: bigint;
+}> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
   const { rebatePerSwap, rebatePerHook } = await getRebatePerEvent(client);
 
@@ -39,7 +43,12 @@ export async function calculateRebate(
   }).filter((log) => log.eventName === "Swap");
 
   if (swapEvents.length === 0) {
-    return { beneficiary: zeroAddress, gasToRebate: 0n };
+    return {
+      beneficiary: zeroAddress,
+      gasToRebate: 0n,
+      txnHash: "0x0",
+      blockNumber: 0n,
+    };
   }
 
   const beneficiary: Address = swapEvents[0].args.sender;
@@ -72,7 +81,12 @@ export async function calculateRebate(
       ? (txnReceipt.gasUsed * 90n) / 100n // rebate a max of 90% of gasUsed
       : gasUsedToRebate;
 
-  return { beneficiary, gasToRebate: gasUsedToRebate * gasPrice };
+  return {
+    beneficiary,
+    gasToRebate: gasUsedToRebate * gasPrice,
+    txnHash: gasUsedToRebate === 0n ? "0x0" : txnHash,
+    blockNumber: txnReceipt.blockNumber,
+  };
 }
 
 async function getRebatePerEvent(
