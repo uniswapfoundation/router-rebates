@@ -17,7 +17,6 @@ export async function batch(
   const result = await Promise.all(
     txnHashes.map((txnHash) => calculateRebate(db, publicClient, txnHash))
   );
-  // TODO: error if multiple referrers
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,
@@ -25,8 +24,14 @@ export async function batch(
   );
   const beneficiary: `0x${string}` = result[0].beneficiary;
   const claimer = await getRebateClaimer(beneficiary);
-  const startBlockNumber = BigInt(1);
-  const endBlockNumber = BigInt(9999);
+  const startBlockNumber = result.reduce(
+    (min: bigint, data) => (data.blockNumber < min ? data.blockNumber : min),
+    result[0].blockNumber
+  );
+  const endBlockNumber = result.reduce(
+    (max: bigint, data) => (data.blockNumber > max ? data.blockNumber : max),
+    result[0].blockNumber
+  );
 
   const signature = await sign(
     claimer,
