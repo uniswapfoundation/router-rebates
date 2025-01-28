@@ -1,5 +1,11 @@
 import { expect, test, beforeAll } from "bun:test";
-import { encodePacked, keccak256, parseGwei, type Address } from "viem";
+import {
+  encodePacked,
+  getAddress,
+  keccak256,
+  verifyTypedData,
+  type Address,
+} from "viem";
 
 import ANVIL_ARTIFACT from "../../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
 import { getContractAddressByContractName } from "./utils/addresses";
@@ -57,14 +63,47 @@ test("batch claim", async () => {
   const data = { txnHashes: txnHashes };
   const params = new URLSearchParams(data as any).toString();
   const result = await fetch(`${BASE_URL}/sign?${params}`);
-  const { claimer, signature, amount, lastBlockNumber } =
+  const { claimer, signature, amount, startBlockNumber, endBlockNumber } =
     (await result.json()) as {
       claimer: Address;
       signature: `0x${string}`;
       amount: string;
-      lastBlockNumber: bigint;
+      startBlockNumber: string;
+      endBlockNumber: string;
     };
   expect(claimer).toBe(wallet1.address);
+
+  // recover the signer address
+  const valid = await verifyTypedData({
+    address: getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+    domain: {
+      name: "FOUNDATION",
+      version: "1",
+      chainId: 31337,
+      verifyingContract: getAddress(rebateAddress),
+    },
+    types: {
+      Claimable: [
+        { name: "claimer", type: "address" },
+        { name: "beneficiary", type: "address" },
+        { name: "hashedTxns", type: "bytes32" },
+        { name: "startBlockNumber", type: "uint256" },
+        { name: "endBlockNumber", type: "uint256" },
+        { name: "amount", type: "uint256" },
+      ],
+    },
+    primaryType: "Claimable",
+    message: {
+      claimer: getAddress(claimer),
+      beneficiary: getAddress(router01Address),
+      hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes])),
+      startBlockNumber: BigInt(startBlockNumber),
+      endBlockNumber: BigInt(endBlockNumber),
+      amount: BigInt(amount),
+    },
+    signature: signature,
+  });
+  expect(valid).toBe(true);
 
   // sum of block.baseFeePerGas for each txnHash
   const baseFees = await Promise.all(
@@ -96,7 +135,8 @@ test("batch claim", async () => {
     wallet1.address,
     tokensClaimed,
     txnHashes,
-    lastBlockNumber,
+    BigInt(startBlockNumber),
+    BigInt(endBlockNumber),
     signature
   );
 
