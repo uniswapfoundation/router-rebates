@@ -28,15 +28,21 @@ contract SignatureRebates is EIP712, Owned {
     /// @dev Thrown when calling claimWithSignature with an empty list of transaction hashes
     error EmptyHashes();
 
-    uint256 public rebatePerSwap = 20_000;
+    // (n * rebatePerSwap) + rebateFixed
+    uint256 public rebatePerSwap = 80_000; // gas units to rebate per swap event
     uint256 public rebatePerHook = 0;
-    uint256 public rebateFixed = 80_000; // fixed rebate for each transaction, assumes 40K gas rebate per token transfer
+    uint256 public rebateFixed = 80_000; // fixed gas units to rebate (to be appended to the total rebate)
     address public signer;
 
     IBrevisProof public brvProof;
     bytes32 public vkHash; // ensure output is from expected zk circuit
 
     mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
+
+    // set safety limits for rebates
+    uint256 constant MAX_REBATE_PER_SWAP = 100_000;
+    uint256 constant MAX_REBATE_PER_HOOK = 80_000;
+    uint256 constant MAX_REBATE_FIXED = 120_000;
 
     constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {
         signer = _owner;
@@ -72,9 +78,13 @@ contract SignatureRebates is EIP712, Owned {
         return _domainSeparatorV4();
     }
 
-    function setRebate(uint256 _rebatePerSwap, uint256 _rebatePerHook) external onlyOwner {
+    function setRebate(uint256 _rebatePerSwap, uint256 _rebatePerHook, uint256 _rebateFixed) external onlyOwner {
+        require(_rebatePerSwap <= MAX_REBATE_PER_SWAP, "exceeds MAX_REBATE_PER_SWAP");
+        require(_rebatePerHook <= MAX_REBATE_PER_HOOK, "exceeds MAX_REBATE_PER_HOOK");
+        require(_rebateFixed <= MAX_REBATE_FIXED, "exceeds MAX_REBATE_FIXED");
         rebatePerSwap = _rebatePerSwap;
         rebatePerHook = _rebatePerHook;
+        rebateFixed = _rebateFixed;
     }
 
     function setSigner(address _signer) external onlyOwner {

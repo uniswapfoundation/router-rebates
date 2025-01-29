@@ -29,7 +29,9 @@ export async function calculateRebate(
   blockNumber: bigint;
 }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
-  const { rebatePerSwap, rebatePerHook } = await getRebatePerEvent(client);
+  const { rebatePerSwap, rebatePerHook, rebateFixed } = await getRebatePerEvent(
+    client
+  );
 
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
@@ -58,7 +60,6 @@ export async function calculateRebate(
   // TODO: require all events are from the same sender
 
   // iterate each swap event, calculating the rebate for the sender (swap router)
-  // let gasToRebate: bigint = 0n;
   let gasUsedToRebate = swapEvents.reduce(
     (gasUsedToRebate: bigint, swapEvent) => {
       // get poolId from swap event
@@ -76,10 +77,12 @@ export async function calculateRebate(
     0n
   );
 
+  // append the fixed rebate for token transfers
+  gasUsedToRebate += rebateFixed;
+
+  const maxGasToRebate = (txnReceipt.gasUsed * 80n) / 100n; // rebate a max of 80% of gasUsed
   gasUsedToRebate =
-    txnReceipt.gasUsed < gasUsedToRebate
-      ? (txnReceipt.gasUsed * 90n) / 100n // rebate a max of 90% of gasUsed
-      : gasUsedToRebate;
+    maxGasToRebate < gasUsedToRebate ? maxGasToRebate : gasUsedToRebate;
 
   return {
     beneficiary,
@@ -89,9 +92,11 @@ export async function calculateRebate(
   };
 }
 
-async function getRebatePerEvent(
-  client: PublicClient
-): Promise<{ rebatePerSwap: bigint; rebatePerHook: bigint }> {
+async function getRebatePerEvent(client: PublicClient): Promise<{
+  rebatePerSwap: bigint;
+  rebatePerHook: bigint;
+  rebateFixed: bigint;
+}> {
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],
@@ -102,5 +107,10 @@ async function getRebatePerEvent(
     abi: [parseAbiItem("function rebatePerHook() view returns (uint256)")],
     functionName: "rebatePerHook",
   });
-  return { rebatePerSwap, rebatePerHook };
+  const rebateFixed = await client.readContract({
+    address: process.env.REBATE_ADDRESS as Address,
+    abi: [parseAbiItem("function rebateFixed() view returns (uint256)")],
+    functionName: "rebateFixed",
+  });
+  return { rebatePerSwap, rebatePerHook, rebateFixed };
 }
