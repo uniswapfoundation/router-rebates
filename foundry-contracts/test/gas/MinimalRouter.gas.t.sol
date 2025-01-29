@@ -81,6 +81,56 @@ contract MinimalRouterTest is Test, Fixtures {
             block.timestamp,
             ZERO_BYTES
         );
+
+        // Provide full-range liquidity to the pool
+        tickLower = -60;
+        tickUpper = 60;
+
+        liquidityAmount = 100e18;
+
+        (amount0Expected, amount1Expected) = LiquidityAmounts.getAmountsForLiquidity(
+            SQRT_PRICE_1_1,
+            TickMath.getSqrtPriceAtTick(tickLower),
+            TickMath.getSqrtPriceAtTick(tickUpper),
+            liquidityAmount
+        );
+
+        (tokenId,) = posm.mint(
+            key,
+            tickLower,
+            tickUpper,
+            liquidityAmount,
+            amount0Expected + 1,
+            amount1Expected + 1,
+            address(this),
+            block.timestamp,
+            ZERO_BYTES
+        );
+
+        // Provide full-range liquidity to the pool
+        tickLower = -120;
+        tickUpper = 120;
+
+        liquidityAmount = 100e18;
+
+        (amount0Expected, amount1Expected) = LiquidityAmounts.getAmountsForLiquidity(
+            SQRT_PRICE_1_1,
+            TickMath.getSqrtPriceAtTick(tickLower),
+            TickMath.getSqrtPriceAtTick(tickUpper),
+            liquidityAmount
+        );
+
+        (tokenId,) = posm.mint(
+            key,
+            tickLower,
+            tickUpper,
+            liquidityAmount,
+            amount0Expected + 1,
+            amount1Expected + 1,
+            address(this),
+            block.timestamp,
+            ZERO_BYTES
+        );
     }
 
     // snapshot zeroForOne, exactInput, 0 ticks crossed
