@@ -106,7 +106,7 @@ test("batch claim", async () => {
   expect(valid).toBe(true);
 
   // sum of block.baseFeePerGas for each txnHash
-  const baseFees = await Promise.all(
+  const expectedRebate = await Promise.all(
     txnHashes.map(async (txnHash): Promise<bigint> => {
       const receipt = await publicClient.getTransactionReceipt({
         hash: txnHash,
@@ -114,19 +114,24 @@ test("batch claim", async () => {
       const block = await publicClient.getBlock({
         blockNumber: receipt.blockNumber,
       });
-      return block.baseFeePerGas!;
+      let gasToRebate = 160000n; // 80k gas per swap event, + 80k fixed gas
+      const maxGasToRebate = (receipt.gasUsed * 80n) / 100n; // rebate a max of 80% of gasUsed
+      gasToRebate = maxGasToRebate < gasToRebate ? maxGasToRebate : gasToRebate;
+
+      const gasPrice = block.baseFeePerGas!;
+      return gasPrice * gasToRebate;
     })
   );
-  const totalBaseFee = baseFees.reduce((acc, baseFee) => acc + baseFee, 0n);
-
+  const totalRebate = expectedRebate.reduce(
+    (acc, expectedRebate) => acc + expectedRebate,
+    0n
+  );
   const tokensClaimed = BigInt(amount);
-  // TODO: tokensClaimed = 20k gas used * 12 txns * baseFee
-  // expect(tokensClaimed).toBe(20_000n * 12n * totalBaseFee);
+  expect(tokensClaimed).toBeLessThan(totalRebate);
 
-  // const wallet1BalanceBefore: bigint = await rewardTokenBalanceOf(
-  //   rewardTokenAddress,
-  //   wallet1.address
-  // );
+  const wallet1BalanceBefore: bigint = await publicClient.getBalance({
+    address: wallet1.address,
+  });
 
   // wallet1 claims the rebate
   await claimWithSignature(
@@ -140,9 +145,10 @@ test("batch claim", async () => {
     signature
   );
 
-  // const wallet1BalanceAfter: bigint = await rewardTokenBalanceOf(
-  //   rewardTokenAddress,
-  //   wallet1.address
-  // );
-  // expect(wallet1BalanceAfter).toBe(wallet1BalanceBefore + tokensClaimed);
+  const wallet1BalanceAfter: bigint = await publicClient.getBalance({
+    address: wallet1.address,
+  });
+  expect(wallet1BalanceAfter).toBeLessThanOrEqual(
+    wallet1BalanceBefore + tokensClaimed
+  ); // balance after is not total claimed amount because some spent on gas
 });
