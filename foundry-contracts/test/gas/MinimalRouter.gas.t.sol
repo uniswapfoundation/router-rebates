@@ -171,6 +171,50 @@ contract MinimalRouterTest is Test, Fixtures {
 
     // --------------------------
 
+    // snapshot zeroForOne, exactInput, 61 ticks crossed
+    function test_gas_swapCall_zeroForOne_crossSixtyOneTicks() public {
+        snap_swapCall(true, true, 61);
+    }
+
+    // snapshot oneForZero, exactInput, 61 ticks crossed
+    function test_gas_swapCall_oneForZero_crossSixtyOneTicks() public {
+        snap_swapCall(false, true, 61);
+    }
+
+    // snapshot zeroForOne, exactOutput, 61 ticks crossed
+    function test_gas_swapCall_zeroForOne_exactOutput_crossSixtyOneTicks() public {
+        snap_swapCall(true, false, 61);
+    }
+
+    // snapshot oneForZero, exactOutput, 61 ticks crossed
+    function test_gas_swapCall_oneForZero_exactOutput_crossSixtyOneTicks() public {
+        snap_swapCall(false, false, 61);
+    }
+
+    // --------------------------
+
+    // snapshot zeroForOne, exactInput, 121 ticks crossed
+    function test_gas_swapCall_zeroForOne_crossOneHundredTwentyOneTicks() public {
+        snap_swapCall(true, true, 121);
+    }
+
+    // snapshot oneForZero, exactInput, 121 ticks crossed
+    function test_gas_swapCall_oneForZero_crossOneHundredTwentyOneTicks() public {
+        snap_swapCall(false, true, 121);
+    }
+
+    // snapshot zeroForOne, exactOutput, 121 ticks crossed
+    function test_gas_swapCall_zeroForOne_exactOutput_crossOneHundredTwentyOneTicks() public {
+        snap_swapCall(true, false, 121);
+    }
+
+    // snapshot oneForZero, exactOutput, 121 ticks crossed
+    function test_gas_swapCall_oneForZero_exactOutput_crossOneHundredTwentyOneTicks() public {
+        snap_swapCall(false, false, 121);
+    }
+
+    // --------------------------
+
     // snapshot router gas zeroForOne, exactInput, 0 ticks crossed
     function test_gas_routerCall_zeroForOne_exactInput_withinTick() public {
         snap_routerCall(true, true, 0);
@@ -259,6 +303,50 @@ contract MinimalRouterTest is Test, Fixtures {
 
     // --------------------------
 
+    // snapshot router gas zeroForOne, exactInput, 61 ticks crossed
+    function test_gas_routerCall_zeroForOne_crossSixtyOneTicks() public {
+        snap_routerCall(true, true, 61);
+    }
+
+    // snapshot router gas oneForZero, exactInput, 61 ticks crossed
+    function test_gas_routerCall_oneForZero_crossSixtyOneTicks() public {
+        snap_routerCall(false, true, 61);
+    }
+
+    // snapshot router gas zeroForOne, exactOutput, 61 ticks crossed
+    function test_gas_routerCall_zeroForOne_exactOutput_crossSixtyOneTicks() public {
+        snap_routerCall(true, false, 61);
+    }
+
+    // snapshot router gas oneForZero, exactOutput, 61 ticks crossed
+    function test_gas_routerCall_oneForZero_exactOutput_crossSixtyOneTicks() public {
+        snap_routerCall(false, false, 61);
+    }
+
+    // --------------------------
+
+    // snapshot router gas zeroForOne, exactInput, 121 ticks crossed
+    function test_gas_routerCall_zeroForOne_crossOneHundredTwentyOneTicks() public {
+        snap_routerCall(true, true, 121);
+    }
+
+    // snapshot router gas oneForZero, exactInput, 121 ticks crossed
+    function test_gas_routerCall_oneForZero_crossOneHundredTwentyOneTicks() public {
+        snap_routerCall(false, true, 121);
+    }
+
+    // snapshot router gas zeroForOne, exactOutput, 121 ticks crossed
+    function test_gas_routerCall_zeroForOne_exactOutput_crossOneHundredTwentyOneTicks() public {
+        snap_routerCall(true, false, 121);
+    }
+
+    // snapshot router gas oneForZero, exactOutput, 121 ticks crossed
+    function test_gas_routerCall_oneForZero_exactOutput_crossOneHundredTwentyOneTicks() public {
+        snap_routerCall(false, false, 121);
+    }
+
+    // --------------------------
+
     function snap_swapCall(bool zeroForOne, bool exactInput, int256 ticksToCross) public {
         uint160 sqrtPriceLimit = zeroForOne
             ? TickMath.getSqrtPriceAtTick(int24(int256(currentTick) - (ticksToCross + 1))) + 1
@@ -274,6 +362,11 @@ contract MinimalRouterTest is Test, Fixtures {
             )
         );
         minRouterWithSnapshot.swap(key, zeroForOne, exactInput, 100000e18, sqrtPriceLimit, ZERO_BYTES);
+
+        (uint160 sqrtPriceX96,,,) = manager.getSlot0(key.toId());
+        assertEq(sqrtPriceX96, sqrtPriceLimit);
+        int24 tickAfterSwap = TickMath.getTickAtSqrtPrice(sqrtPriceX96);
+        assertEq(tickAfterSwap, int24(int256(currentTick) + (zeroForOne ? -(ticksToCross+1) : (ticksToCross))));
     }
 
     function snap_routerCall(bool zeroForOne, bool exactInput, int256 ticksToCross) public {
@@ -291,6 +384,11 @@ contract MinimalRouterTest is Test, Fixtures {
                 vm.toString(exactInput)
             )
         );
+
+        (uint160 sqrtPriceX96,,,) = manager.getSlot0(key.toId());
+        assertEq(sqrtPriceX96, sqrtPriceLimit);
+        int24 tickAfterSwap = TickMath.getTickAtSqrtPrice(sqrtPriceX96);
+        assertEq(tickAfterSwap, int24(int256(currentTick) + (zeroForOne ? -(ticksToCross+1) : (ticksToCross))));
     }
 
     function test_swap(bool zeroForOne, bool exactInput) public {
