@@ -30,6 +30,7 @@ contract SignatureRebates is EIP712, Owned {
 
     uint256 public rebatePerSwap = 20_000;
     uint256 public rebatePerHook = 0;
+    uint256 public rebateFixed = 80_000; // fixed rebate for each transaction, assumes 40K gas rebate per token transfer
     address public signer;
 
     IBrevisProof public brvProof;
