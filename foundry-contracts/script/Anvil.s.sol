@@ -17,7 +17,7 @@ import {Constants} from "v4-core/src/../test/utils/Constants.sol";
 import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
 
-import {SignatureRebates} from "../src/SignatureRebates.sol";
+import {RouterRebates} from "../src/RouterRebates.sol";
 import {PoolSwapTestClaimable} from "../src/test/PoolSwapTestClaimable.sol";
 import {Counter} from "./mocks/Counter.sol";
 import {HookMiner} from "../test/utils/HookMiner.sol";
@@ -28,7 +28,7 @@ contract AnvilScript is Script {
     address constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
     bytes constant ZERO_BYTES = new bytes(0);
 
-    SignatureRebates rebates;
+    RouterRebates rebates;
 
     MockERC20 token0;
     MockERC20 token1;
@@ -52,7 +52,7 @@ contract AnvilScript is Script {
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        rebates = new SignatureRebates("FOUNDATION", address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266));
+        rebates = new RouterRebates("FOUNDATION", address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266));
         rewardToken.mint(msg.sender, 1_000_000e18);
         rewardToken.approve(address(rebates), type(uint256).max);
         vm.stopBroadcast();

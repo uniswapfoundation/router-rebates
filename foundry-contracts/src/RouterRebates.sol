@@ -17,7 +17,7 @@ struct BlockNumberRange {
     uint128 endBlockNumber;
 }
 
-contract SignatureRebates is EIP712, Owned {
+contract RouterRebates is EIP712, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();

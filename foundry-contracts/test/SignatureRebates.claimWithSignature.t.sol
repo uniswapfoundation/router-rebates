@@ -8,11 +8,11 @@ import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
 
 import {ClaimableHash} from "../src/libraries/ClaimableHash.sol";
-import {BlockNumberRange, SignatureRebates} from "../src/SignatureRebates.sol";
+import {BlockNumberRange, RouterRebates} from "../src/RouterRebates.sol";
 import {IRebateClaimer} from "../src/base/IRebateClaimer.sol";
 
-contract SignatureRebatesTest is Test {
-    SignatureRebates public rebates;
+contract RouterRebatesTest is Test {
+    RouterRebates public rebates;
     uint256 campaignId;
     uint256 nativeEthCampaignId;
 
@@ -27,7 +27,7 @@ contract SignatureRebatesTest is Test {
     error InvalidAmount();
 
     function setUp() public {
-        rebates = new SignatureRebates("REBATES", address(this));
+        rebates = new RouterRebates("REBATES", address(this));
 
         (alice, alicePK) = makeAddrAndKey("ALICE");
         (bob, bobPK) = makeAddrAndKey("BOB");
