@@ -27,7 +27,7 @@ beforeAll(() => {
 
   router02Address = getContractAddressByContractName("UniversalRouter");
 
-  rebateAddress = getContractAddressByContractName("SignatureRebates");
+  rebateAddress = getContractAddressByContractName("RouterRebates");
 
   singleHopHash = ANVIL_ARTIFACT.transactions.find(
     (transaction) =>

@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "REBATE_ADDRESS=$(jq -r '.transactions[] | select(.contractName == \"SignatureRebates\" and .transactionType == \"CREATE\") | .contractAddress' ../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json) bun run index.ts"
+    "dev": "REBATE_ADDRESS=$(jq -r '.transactions[] | select(.contractName == \"RouterRebates\" and .transactionType == \"CREATE\") | .contractAddress' ../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json) bun run index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
