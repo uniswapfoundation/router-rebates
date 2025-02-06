@@ -72,6 +72,9 @@ contract RouterRebates is EIP712, Owned {
 
         // send amount to recipient
         CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
+
+        // beneficiary, claimer, amount
+        emit Claimed(???, ???);
     }
 
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
