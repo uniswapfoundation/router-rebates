@@ -1,47 +1,29 @@
-Notes:
-
-1. start anvil
-
-2. run bun server
-
-```bash
-cd rebate-signer
-bun run dev
-```
-
-3. run ponder
-
-```bash
-cd poolid-indexer
-npm run dev
-```
-
----
-
 # Router Rebates
 
-A gas subsidy program, sponsored by Uniswap Foundation and Brevis, to encourage routing and solving integration with Uniswap v4 Hooks.
+A gas subsidy program, sponsored by Uniswap Foundation and Brevis, to encourage routing and solving integration with Uniswap v4 Hooks
 
 ---
 
 # Program Specs
 
-For any transaction which touches a Uniswap v4 pool, with a hook, authors of the swap router (`sender` address in the `Swap` event), will be able to claim a rebate against the gas spent. Rebates will be available on the 12 initial chains with Uniswap v4, with claims faciliated on Unichain. The rebate is paid out as native ether tokens.
+For any transaction that touches a Uniswap v4 pool, _with a hook_, authors of the swap router (_`sender` address in the `Swap` event_), will be able to claim a rebate against the gas spent
+
+Rebates will be available on the 12 initial chains with Uniswap v4, with claims faciliated on Unichain. The rebate is paid out in native Ether.
 
 ### Rebate Size
 
-For a given transaction hash, with swap events coming from a hook'ed pool, the rebate is calculated with:
+For a given transaction hash, with swap events coming from a hook'ed pool, the rebate is calculated according to:
 
 ```
-gasUsage = 80,000 * number_of_swap_events + 80,000
-rebateEth = gasUsage * txnReceipt.baseFee
+gasUsageToRebate = 80,000 * number_of_swap_events + 80,000
+ethToRebate = gasUsageToRebate * txnReceipt.baseFee
 ```
 
-> As a safety precaution against hyper-optimized swap, the minimum of the above calculation or _80% of transaction gas usage_ is taken
+> As a safety precaution against hyper-optimized swaps, the minimum of the above calculation or _80% of transaction gas usage_ is taken
 
 # Router Integrations
 
-Because rebates are claimed on Unichain for trades happening on other networks, _beneficiaries_ need to specify the authorized claimer.
+Because rebates are claimed on _Unichain_ for trades happening on other networks, _beneficiaries_ need to specify the authorized claimer.
 
 The swap router contract (the contract calling `poolManager.swap()`) should implement this function selector:
 
@@ -51,7 +33,7 @@ function rebateClaimer() external view returns (address);
 
 See [`IRebateClaimer`](foundry-contracts/src/interfaces/IRebateClaimer.sol) for the full interface.
 
-**The wallet which claims the rebate is specified by this address**. The backend system performs verification against this address, to prevent griefing scenarios where malicious attackers are claiming rebates they are not entitled to.
+**The wallet which claims the rebate is specified by this address, _`rebateClaimer`_**. The backend system performs verification against this address, to prevent griefing scenarios where malicious attackers are claiming rebates they are not entitled to.
 
 # Claim Process: Signatures
 
@@ -79,7 +61,7 @@ IRouterRebates(routerRebateAddress).claimWithSignature(...);
 
 # Glossary
 
-`swap router` / `beneficiary` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`
+`swap router` / `beneficiary` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`. Can also be thought of as the `sender` address in the `Swap()` event
 
 `claimer` - the address which is claiming the rebate on behalf of the _swap router_ / _beneficiary_
 
