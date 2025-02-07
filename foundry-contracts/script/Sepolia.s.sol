@@ -22,17 +22,15 @@ import {PoolSwapTestClaimable} from "../src/test/PoolSwapTestClaimable.sol";
 import {Counter} from "./mocks/Counter.sol";
 import {HookMiner} from "../test/utils/HookMiner.sol";
 
-/// @notice Forge script for deploying v4 & hooks to **anvil**
-/// @dev This script only works on an anvil RPC because v4 exceeds bytecode limits
-contract AnvilScript is Script {
+contract SepoliaScript is Script {
     address constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
+    IPoolManager constant manager = IPoolManager(address(0xE03A1074c86CFeDd5C142C4F04F1a1536e203543));
+    RouterRebates constant rebates = RouterRebates(payable(address(0x27D790334C93618204762E4eC344B11d7b7693c3)));
+    PoolModifyLiquidityTest lpRouter = PoolModifyLiquidityTest(address(0x0C478023803a644c94c4CE1C1e7b9A087e411B0A));
     bytes constant ZERO_BYTES = new bytes(0);
-
-    RouterRebates rebates;
 
     MockERC20 token0;
     MockERC20 token1;
-    MockERC20 rewardToken;
 
     address hook1;
     address hook2;
@@ -40,25 +38,18 @@ contract AnvilScript is Script {
     PoolKey poolKey;
     PoolKey poolKeyHook1;
     PoolKey poolKeyHook2;
-    IPoolManager manager;
+
     PoolSwapTestClaimable swapRouter;
-    PoolModifyLiquidityTest lpRouter;
 
     function setUp() public {}
 
     function run() public {
         vm.startBroadcast();
-        (token0, token1, rewardToken) = deployTokens();
+        (token0, token1) = deployTokens();
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        rebates = new RouterRebates("FOUNDATION", address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266));
-        rewardToken.mint(msg.sender, 1_000_000e18);
-        rewardToken.approve(address(rebates), type(uint256).max);
-        vm.stopBroadcast();
-
-        vm.startBroadcast();
-        deployUniswapV4();
+        swapRouter = new PoolSwapTestClaimable(manager, rebates);
         vm.stopBroadcast();
 
         vm.startBroadcast();
@@ -94,20 +85,14 @@ contract AnvilScript is Script {
         swap_PoolSwapTest(poolKeyHook2, true, 1e18);
         swap_PoolSwapTest(poolKeyHook2, false, 1e18);
         vm.stopBroadcast();
-
-        vm.startBroadcast();
-        // send ETH to the contract
-        payable(address(rebates)).transfer(1 ether);
-        vm.stopBroadcast();
     }
 
     // -----------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------
-    function deployTokens() internal returns (MockERC20 _token0, MockERC20 _token1, MockERC20 _rewardToken) {
+    function deployTokens() internal returns (MockERC20 _token0, MockERC20 _token1) {
         MockERC20 tokenA = new MockERC20("MockA", "A", 18);
         MockERC20 tokenB = new MockERC20("MockB", "B", 18);
-        _rewardToken = new MockERC20("Reward", "R", 18);
 
         if (uint160(address(tokenA)) < uint160(address(tokenB))) {
             _token0 = tokenA;
@@ -116,12 +101,6 @@ contract AnvilScript is Script {
             _token0 = tokenB;
             _token1 = tokenA;
         }
-    }
-
-    function deployUniswapV4() internal {
-        manager = new PoolManager(address(0));
-        lpRouter = new PoolModifyLiquidityTest(manager);
-        swapRouter = new PoolSwapTestClaimable(manager, rebates);
     }
 
     function createPoolWithLiquidity(address hookAddress) internal returns (PoolKey memory _poolKey) {

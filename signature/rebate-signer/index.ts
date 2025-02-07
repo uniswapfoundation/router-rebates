@@ -1,11 +1,22 @@
 import { Database } from "bun:sqlite";
 import { createPublicClient, http } from "viem";
-import { anvil } from "viem/chains";
+import { anvil, mainnet, sepolia } from "viem/chains";
 import { batch } from "./src/main";
 
 const publicClient = createPublicClient({
-  chain: anvil, // TODO: Use the correct chain
-  transport: http(),
+  chain:
+    process.env.NODE_ENV === "local"
+      ? anvil
+      : process.env.NODE_ENV === "mainnet"
+      ? mainnet
+      : sepolia,
+  transport: http(
+    process.env.NODE_ENV === "local"
+      ? process.env.LOCAL_RPC_URL
+      : process.env.NODE_ENV === "mainnet"
+      ? process.env.MAINNET_RPC_URL
+      : process.env.TESTNET_RPC_URL
+  ),
 });
 
 const db = new Database("../poolid-indexer/.ponder/sqlite/public.db", {

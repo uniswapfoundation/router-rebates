@@ -1,7 +1,7 @@
 import { encodePacked, erc20Abi, keccak256, type Address } from "viem";
 import { publicClient, wallet1, walletClient } from "./constants";
 
-import { abi as SignatureRebatesABI } from "../../../../foundry-contracts/out/SignatureRebates.sol/SignatureRebates.json";
+import { abi as RouterRebatesABI } from "../../../../foundry-contracts/out/RouterRebates.sol/RouterRebates.json";
 
 export async function claimWithSignature(
   rebateContract: Address,
@@ -16,7 +16,7 @@ export async function claimWithSignature(
   const { request } = await publicClient.simulateContract({
     account: wallet1,
     address: rebateContract,
-    abi: SignatureRebatesABI,
+    abi: RouterRebatesABI,
     functionName: "claimWithSignature",
     args: [
       beneficiary,

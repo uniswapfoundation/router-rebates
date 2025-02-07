@@ -10,14 +10,13 @@ import {IRebateClaimer} from "./base/IRebateClaimer.sol";
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
 import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 import {IBrevisProof} from "./interfaces/IBrevisProof.sol";
-import "forge-std/console2.sol";
 
 struct BlockNumberRange {
     uint128 startBlockNumber;
     uint128 endBlockNumber;
 }
 
-contract SignatureRebates is EIP712, Owned {
+contract RouterRebates is EIP712, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
@@ -27,6 +26,8 @@ contract SignatureRebates is EIP712, Owned {
 
     /// @dev Thrown when calling claimWithSignature with an empty list of transaction hashes
     error EmptyHashes();
+
+    event Claimed(address claimer, address beneficiary, address recipient, uint256 amount);
 
     // (n * rebatePerSwap) + rebateFixed
     uint256 public rebatePerSwap = 80_000; // gas units to rebate per swap event
@@ -72,6 +73,8 @@ contract SignatureRebates is EIP712, Owned {
 
         // send amount to recipient
         CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
+
+        emit Claimed(msg.sender, beneficiary, recipient, amount);
     }
 
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
