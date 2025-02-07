@@ -4,8 +4,8 @@ out/
 
 # Ignores development broadcast logs
 !/foundry-contracts/broadcast
-/foundry-contracts/broadcast/*/31337/
-/foundry-contracts/broadcast/**/dry-run/
+/foundry-contracts/broadcast/*/*/dry-run/*.json
+/foundry-contracts/broadcast/*/*/run-[0-9]*.json
 
 # Docs
 docs/
