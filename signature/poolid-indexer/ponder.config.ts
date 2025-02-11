@@ -2,17 +2,18 @@ import { createConfig } from "@ponder/core";
 import { http } from "viem";
 
 import { abi as PoolManagerAbi } from "../../foundry-contracts/out/PoolManager.sol/PoolManager.json";
-import { transactions } from "../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
+import { transactions } from "../../foundry-contracts/broadcast/Anvil.s.sol/1/run-latest.json";
 
 export default createConfig({
   networks: {
     anvil: {
-      chainId: 31337,
+      chainId: 1,
       transport: http(process.env.PONDER_RPC_URL_31337),
     },
     sepolia: {
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
+      maxRequestsPerSecond: 10,
     },
   },
   contracts: {

@@ -4,7 +4,7 @@
 
 ```bash
 cd ../foundry-contracts
-anvil
+anvil --chain-id 1
 ```
 
 2. Deploy v4 and Generate Data
@@ -30,7 +30,7 @@ bun run dev
 
 5. Generate Signature
 
-> Grab transaction hashes from `broadcast/Anvil.s.sol/31337/run-latest.json`
+> Grab transaction hashes from `broadcast/Anvil.s.sol/1/run-latest.json`
 
 ```bash
 curl -G 'http:/localhost:3000/sign' --data-urlencode 'campaignId=1' --data-urlencode 'txnHashes=0x77014b4caad9c07a4840d6874d6f219ec3476c0311c90036e5f2e4c8072396f6,0xa2b356e88e7b8a2992711790e57a4c0dba7d409d97ea19cd42102f39dbddc3c9'
