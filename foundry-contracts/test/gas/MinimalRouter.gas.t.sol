@@ -416,7 +416,7 @@ contract MinimalRouterTest is Test, Fixtures {
         (uint160 sqrtPriceX96,,,) = manager.getSlot0(key.toId());
         assertEq(sqrtPriceX96, sqrtPriceLimit);
         int24 tickAfterSwap = TickMath.getTickAtSqrtPrice(sqrtPriceX96);
-        assertEq(tickAfterSwap, int24(int256(currentTick) + (zeroForOne ? -(ticksToCross+1) : (ticksToCross))));
+        assertEq(tickAfterSwap, int24(int256(currentTick) + (zeroForOne ? -(ticksToCross + 1) : (ticksToCross))));
     }
 
     function snap_routerCall(bool zeroForOne, bool exactInput, int256 ticksToCross) public {
@@ -438,7 +438,7 @@ contract MinimalRouterTest is Test, Fixtures {
         (uint160 sqrtPriceX96,,,) = manager.getSlot0(key.toId());
         assertEq(sqrtPriceX96, sqrtPriceLimit);
         int24 tickAfterSwap = TickMath.getTickAtSqrtPrice(sqrtPriceX96);
-        assertEq(tickAfterSwap, int24(int256(currentTick) + (zeroForOne ? -(ticksToCross+1) : (ticksToCross))));
+        assertEq(tickAfterSwap, int24(int256(currentTick) + (zeroForOne ? -(ticksToCross + 1) : (ticksToCross))));
     }
 
     function test_swap(bool zeroForOne, bool exactInput) public {
