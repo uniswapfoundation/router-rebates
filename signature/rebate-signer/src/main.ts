@@ -23,7 +23,7 @@ export async function batch(
     0n
   );
   const beneficiary: `0x${string}` = result[0].beneficiary;
-  const claimer = await getRebateClaimer(beneficiary);
+  const claimer = await getRebateClaimer(publicClient, beneficiary);
   const startBlockNumber = result.reduce(
     (min: bigint, data) => (data.blockNumber < min ? data.blockNumber : min),
     result[0].blockNumber
@@ -36,6 +36,7 @@ export async function batch(
   const signature = await sign(
     claimer,
     beneficiary,
+    BigInt(await publicClient.getChainId()),
     txnHashes,
     startBlockNumber,
     endBlockNumber,

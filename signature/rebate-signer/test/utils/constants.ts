@@ -1,5 +1,5 @@
 import { createPublicClient, createWalletClient, http } from "viem";
-import { anvil } from "viem/chains";
+import { anvil, mainnet } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
 import ARTIFACT from "../../../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
@@ -18,12 +18,12 @@ export const wallet1 = privateKeyToAccount(
 );
 
 export const publicClient = createPublicClient({
-  chain: anvil, // TODO: Use the correct chain
-  transport: http(),
+  chain: mainnet,
+  transport: http("http://localhost:8545"),
 });
 
 export const walletClient = createWalletClient({
   account: wallet1,
-  chain: anvil,
-  transport: http(),
+  chain: mainnet,
+  transport: http("http://localhost:8545"),
 });

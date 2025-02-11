@@ -7,7 +7,7 @@ import {
   type Address,
 } from "viem";
 
-import ANVIL_ARTIFACT from "../../../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
+import ANVIL_ARTIFACT from "../../../foundry-contracts/broadcast/Anvil.s.sol/1/run-latest.json";
 import { getContractAddressByContractName } from "./utils/addresses";
 import { BASE_URL, publicClient, wallet1 } from "./utils/constants";
 import { claimWithSignature } from "./utils/chain";
@@ -60,7 +60,7 @@ test("batch claim", async () => {
     .sort() as `0x${string}`[];
   expect(txnHashes.length).toBe(12);
 
-  const data = { txnHashes: txnHashes };
+  const data = { chainId: 1, txnHashes: txnHashes };
   const params = new URLSearchParams(data as any).toString();
   const result = await fetch(`${BASE_URL}/sign?${params}`);
   const { claimer, signature, amount, startBlockNumber, endBlockNumber } =
@@ -79,13 +79,14 @@ test("batch claim", async () => {
     domain: {
       name: "FOUNDATION",
       version: "1",
-      chainId: 31337,
+      chainId: 1, // should be the chain where router rebates is deployed
       verifyingContract: getAddress(rebateAddress),
     },
     types: {
       Claimable: [
         { name: "claimer", type: "address" },
         { name: "beneficiary", type: "address" },
+        { name: "chainId", type: "uint256" },
         { name: "hashedTxns", type: "bytes32" },
         { name: "startBlockNumber", type: "uint128" },
         { name: "endBlockNumber", type: "uint128" },
@@ -96,6 +97,7 @@ test("batch claim", async () => {
     message: {
       claimer: getAddress(claimer),
       beneficiary: getAddress(router01Address),
+      chainId: BigInt(1),
       hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes])),
       startBlockNumber: BigInt(startBlockNumber),
       endBlockNumber: BigInt(endBlockNumber),
@@ -135,6 +137,7 @@ test("batch claim", async () => {
 
   // wallet1 claims the rebate
   await claimWithSignature(
+    BigInt(1),
     rebateAddress,
     router01Address,
     wallet1.address,

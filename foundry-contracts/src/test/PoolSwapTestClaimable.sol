@@ -8,6 +8,7 @@ import {IRebateClaimer} from "../base/IRebateClaimer.sol";
 
 contract PoolSwapTestClaimable is PoolSwapTest, IRebateClaimer {
     address public override rebateClaimer;
+
     constructor(IPoolManager _manager, RouterRebates _rebates) PoolSwapTest(_manager) {}
 
     function setClaimer(address _claimer) public {
