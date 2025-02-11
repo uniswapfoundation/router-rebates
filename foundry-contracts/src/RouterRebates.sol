@@ -38,7 +38,7 @@ contract RouterRebates is EIP712, Owned {
     IBrevisProof public brvProof;
     bytes32 public vkHash; // ensure output is from expected zk circuit
 
-    mapping(address beneficiary => uint256 blockNum) public lastBlockClaimed;
+    mapping(uint256 chainId => mapping(address beneficiary => uint256 blockNum)) public lastBlockClaimed;
 
     // set safety limits for rebates
     uint256 constant MAX_REBATE_PER_SWAP = 100_000;
@@ -50,6 +50,7 @@ contract RouterRebates is EIP712, Owned {
     }
 
     function claimWithSignature(
+        uint256 chainId,
         address beneficiary,
         address recipient,
         uint256 amount,
@@ -60,16 +61,22 @@ contract RouterRebates is EIP712, Owned {
         if (transactionHashes.length == 0) revert EmptyHashes();
         // startBlockNumber must be less than endBlockNumber
         if (blockRange.startBlockNumber >= blockRange.endBlockNumber) revert InvalidBlockNumber();
-        if (blockRange.startBlockNumber < lastBlockClaimed[beneficiary]) revert InvalidBlockNumber();
+        if (blockRange.startBlockNumber < lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest = ClaimableHash.hashClaimable(
-            msg.sender, beneficiary, transactionHashes, blockRange.startBlockNumber, blockRange.endBlockNumber, amount
+            msg.sender,
+            beneficiary,
+            chainId,
+            transactionHashes,
+            blockRange.startBlockNumber,
+            blockRange.endBlockNumber,
+            amount
         );
         signature.verify(_hashTypedDataV4(digest), signer);
 
         // consume the block number to prevent replaying claims
-        lastBlockClaimed[beneficiary] = blockRange.endBlockNumber - 1;
+        lastBlockClaimed[chainId][beneficiary] = blockRange.endBlockNumber - 1;
 
         // send amount to recipient
         CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
@@ -148,8 +155,11 @@ contract RouterRebates is EIP712, Owned {
         require(msg.sender == claimer, "msg.sender is not authorized claimer");
         uint64 beginBlk = uint64(bytes8(_appOutput[40:48]));
         uint64 endBlk = uint64(bytes8(_appOutput[48:56]));
-        require(beginBlk > lastBlockClaimed[router], "begin blocknum too small");
-        lastBlockClaimed[router] = endBlk;
+
+        // TODO: fix
+        uint256 chainId = 1;
+        require(beginBlk > lastBlockClaimed[chainId][router], "begin blocknum too small");
+        lastBlockClaimed[chainId][router] = endBlk;
         return uint128(bytes16(_appOutput[56:72]));
     }
 
