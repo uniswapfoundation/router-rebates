@@ -54,11 +54,10 @@ contract RouterRebates is EIP712, Owned {
         address beneficiary,
         address recipient,
         uint256 amount,
-        bytes32[] calldata transactionHashes,
+        bytes32 txnListHash,
         BlockNumberRange calldata blockRange,
         bytes calldata signature
     ) external {
-        if (transactionHashes.length == 0) revert EmptyHashes();
         // startBlockNumber must be less than endBlockNumber
         if (blockRange.startBlockNumber >= blockRange.endBlockNumber) revert InvalidBlockNumber();
         if (blockRange.startBlockNumber < lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
@@ -68,7 +67,7 @@ contract RouterRebates is EIP712, Owned {
             msg.sender,
             beneficiary,
             chainId,
-            transactionHashes,
+            txnListHash,
             blockRange.startBlockNumber,
             blockRange.endBlockNumber,
             amount

@@ -58,7 +58,7 @@ contract RouterRebatesTest is Test {
     ) public pure {
         assertEq(
             ClaimableHash.hashClaimable(
-                claimer, beneficiary, chainId, transactionHashes, startBlockNumber, endBlockNumber, amount
+                claimer, beneficiary, chainId, keccak256(abi.encodePacked(transactionHashes)), startBlockNumber, endBlockNumber, amount
             ),
             keccak256(
                 abi.encode(
@@ -91,7 +91,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -120,7 +120,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -149,7 +149,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -170,7 +170,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -183,7 +183,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -206,7 +206,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -229,7 +229,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -250,7 +250,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -270,7 +270,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -304,7 +304,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -326,7 +326,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
@@ -350,7 +350,7 @@ contract RouterRebatesTest is Test {
             beneficiary,
             recipient,
             amount,
-            transactionHashes,
+            keccak256(abi.encodePacked(transactionHashes)),
             BlockNumberRange(startBlockNumber, endBlockNumber),
             signature
         );
