@@ -142,7 +142,7 @@ test("batch claim", async () => {
     router01Address,
     wallet1.address,
     tokensClaimed,
-    txnHashes,
+    keccak256(encodePacked(["bytes32[]"], [txnHashes])),
     BigInt(startBlockNumber),
     BigInt(endBlockNumber),
     signature

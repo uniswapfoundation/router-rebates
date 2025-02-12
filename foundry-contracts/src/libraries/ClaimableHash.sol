@@ -10,7 +10,7 @@ library ClaimableHash {
         address claimer,
         address beneficiary,
         uint256 chainId,
-        bytes32[] calldata transactionHashes,
+        bytes32 txnListHash,
         uint128 startBlockNumber,
         uint128 endBlockNumber,
         uint256 amount
@@ -22,7 +22,7 @@ library ClaimableHash {
                 claimer,
                 beneficiary,
                 chainId,
-                keccak256(abi.encodePacked(transactionHashes)),
+                txnListHash,
                 startBlockNumber,
                 endBlockNumber,
                 amount
