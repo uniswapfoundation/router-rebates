@@ -46,6 +46,22 @@ export default createConfig({
       transport: http(process.env.PONDER_RPC_URL_81457),
       maxRequestsPerSecond: process.env.PONDER_RPC_URL_81457 !== "" ? 15 : 5,
     },
+    ethereum_sepolia: {
+      chainId: 11155111,
+      transport: http(process.env.PONDER_RPC_URL_11155111),
+    },
+    unichain_sepolia: {
+      chainId: 1301,
+      transport: http(process.env.PONDER_RPC_URL_1301),
+    },
+    base_sepolia: {
+      chainId: 84532,
+      transport: http(process.env.PONDER_RPC_URL_84532),
+    },
+    arbitrum_sepolia: {
+      chainId: 421614,
+      transport: http(process.env.PONDER_RPC_URL_421614),
+    },
   },
   contracts: {
     PoolManager: {
@@ -81,6 +97,22 @@ export default createConfig({
         blast: {
           address: "0x1631559198a9e474033433b2958dabc135ab6446",
           startBlock: process.env.NODE_ENV === "dev" ? "latest" : 14377311,
+        },
+        ethereum_sepolia: {
+          address: "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 7258946,
+        },
+        unichain_sepolia: {
+          address: "0x00B036B58a818B1BC34d502D3fE730Db729e62AC",
+          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 7092034,
+        },
+        base_sepolia: {
+          address: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
+          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 19088197,
+        },
+        arbitrum_sepolia: {
+          address: "0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317",
+          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 105909222,
         },
       },
       abi: PoolManagerAbi,
