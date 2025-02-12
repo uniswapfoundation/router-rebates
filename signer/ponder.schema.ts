@@ -1,7 +1,7 @@
 import { index, onchainTable } from "ponder";
 
 export const pool = onchainTable(
-  "poolKey",
+  "pool",
   (t) => ({
     poolId: t.hex().notNull().primaryKey(),
     currency0: t.hex().notNull(),

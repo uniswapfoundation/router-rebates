@@ -63,6 +63,7 @@ export async function getRebateClaimer(
   publicClient: PublicClient,
   beneficiary: `0x${string}`
 ): Promise<`0x${string}`> {
+  console.log(beneficiary);
   return await publicClient.readContract({
     address: beneficiary,
     abi: [parseAbiItem("function rebateClaimer() view returns (address)")],

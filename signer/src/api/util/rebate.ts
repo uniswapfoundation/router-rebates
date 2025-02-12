@@ -1,4 +1,4 @@
-import { Client } from "@ponder/client";
+import { Client, createClient } from "@ponder/client";
 import schema from "ponder:schema";
 import { eq } from "drizzle-orm";
 import {
@@ -10,6 +10,8 @@ import {
   type PublicClient,
   type TransactionReceipt,
 } from "viem";
+import { getClient } from "./chain";
+import * as foo from "../../../ponder.schema";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -31,9 +33,8 @@ export async function calculateRebate(
   blockNumber: bigint;
 }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
-  const { rebatePerSwap, rebatePerHook, rebateFixed } = await getRebatePerEvent(
-    client
-  );
+  const { rebatePerSwap, rebatePerHook, rebateFixed } =
+    await getRebatePerEvent();
 
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
@@ -65,10 +66,17 @@ export async function calculateRebate(
   const rebates = await Promise.all(
     swapEvents.map(async (swapEvent) => {
       const { id } = swapEvent.args;
-      const result = await db.db
-        .select({ hooks: schema.pool.hooks })
-        .from(schema.pool)
-        .where(eq(schema.pool.poolId, id));
+      console.log("QUERY", id);
+      // const result = await db.db
+      //   .select({ hooks: schema.pool.hooks })
+      //   .from(schema.pool)
+      //   .where(eq(schema.pool.poolId, id));
+      const dbClient = createClient("http://localhost:42069/sql", {
+        schema,
+      });
+      // const result = await dbClient.db.select().from(foo.pool).limit(5);
+      const result = await dbClient.db.query.pool.findFirst();
+      console.log("BUGG");
 
       if (result.length > 0 && result[0]?.hooks !== zeroAddress) {
         return rebatePerSwap + rebatePerHook;
@@ -94,11 +102,12 @@ export async function calculateRebate(
   };
 }
 
-async function getRebatePerEvent(client: PublicClient): Promise<{
+async function getRebatePerEvent(): Promise<{
   rebatePerSwap: bigint;
   rebatePerHook: bigint;
   rebateFixed: bigint;
 }> {
+  const client = getClient(Number(process.env.REBATE_CHAIN_ID));
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],

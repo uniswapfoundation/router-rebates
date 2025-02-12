@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=dev ponder dev --log-level silent",
+    "dev": "NODE_ENV=dev ponder dev --log-level warn",
     "start": "ponder start",
     "db": "ponder db",
     "codegen": "ponder codegen",
