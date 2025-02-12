@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=dev ponder dev",
+    "dev": "NODE_ENV=dev ponder dev --log-level silent",
     "start": "ponder start",
     "db": "ponder db",
     "codegen": "ponder codegen",
@@ -12,8 +12,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "ponder": "^0.9.7",
+    "@ponder/client": "^0.9.7",
     "hono": "^4.5.0",
+    "ponder": "^0.9.7",
     "viem": "^2.21.3"
   },
   "devDependencies": {
