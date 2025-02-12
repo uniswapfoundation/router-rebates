@@ -49,18 +49,22 @@ export default createConfig({
     ethereum_sepolia: {
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
+      maxRequestsPerSecond: process.env.PONDER_RPC_URL_11155111 !== "" ? 15 : 5,
     },
     unichain_sepolia: {
       chainId: 1301,
       transport: http(process.env.PONDER_RPC_URL_1301),
+      maxRequestsPerSecond: process.env.PONDER_RPC_URL_1301 !== "" ? 15 : 5,
     },
     base_sepolia: {
       chainId: 84532,
       transport: http(process.env.PONDER_RPC_URL_84532),
+      maxRequestsPerSecond: process.env.PONDER_RPC_URL_84532 !== "" ? 15 : 5,
     },
     arbitrum_sepolia: {
       chainId: 421614,
       transport: http(process.env.PONDER_RPC_URL_421614),
+      maxRequestsPerSecond: process.env.PONDER_RPC_URL_421614 !== "" ? 15 : 5,
     },
   },
   contracts: {
