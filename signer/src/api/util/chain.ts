@@ -13,66 +13,88 @@ export function getClient(chainId: number): PublicClient {
   const envMode = process.env.NODE_ENV;
   if (chainId === 1) {
     return createPublicClient({
-      chain:
-        envMode === "mainnet" ? mainnet : envMode === "local" ? anvil : sepolia,
+      chain: mainnet,
       transport: http(
-        envMode === "mainnet"
-          ? process.env.ETHEREUM_RPC_URL
-          : envMode === "local"
+        envMode === "dev"
           ? process.env.ETHEREUM_LOCAL_RPC_URL
+          : process.env.ETHEREUM_RPC_URL
+      ),
+    });
+  } else if (chainId === 8453) {
+    // Base
+    return createPublicClient({
+      chain: base,
+      transport: http(
+        envMode === "dev"
+          ? process.env.BASE_LOCAL_RPC_URL
+          : process.env.BASE_RPC_URL
+      ),
+    });
+  } else if (chainId === 42161) {
+    // Arbitrum
+    return createPublicClient({
+      chain: arbitrum,
+      transport: http(
+        envMode === "dev"
+          ? process.env.ARBITRUM_LOCAL_RPC_URL
+          : process.env.ARBITRUM_RPC_URL
+      ),
+    });
+  } else if (chainId === 130) {
+    // Unichain, TODO by upgrading viem
+    return createPublicClient({
+      chain: arbitrum,
+      transport: http(
+        envMode === "dev"
+          ? process.env.UNICHAIN_LOCAL_RPC_URL
+          : process.env.UNICHAIN_RPC_URL
+      ),
+    });
+  } else if (chainId === 11155111) {
+    // Ethereum Sepolia
+    return createPublicClient({
+      chain: sepolia,
+      transport: http(
+        envMode === "dev"
+          ? process.env.ETHEREUM_SEPOLIA_LOCAL_RPC_URL
           : process.env.ETHEREUM_SEPOLIA_RPC_URL
       ),
     });
-  } else if (chainId == 8453) {
-    // Base
+  } else if (chainId === 84532) {
+    // Base Sepolia
     return createPublicClient({
-      chain:
-        envMode === "mainnet"
-          ? base
-          : envMode === "local"
-          ? anvil
-          : baseSepolia,
+      chain: baseSepolia,
       transport: http(
-        envMode === "mainnet"
-          ? process.env.BASE_RPC_URL
-          : envMode === "local"
-          ? process.env.BASE_LOCAL_RPC_URL
+        envMode === "dev"
+          ? process.env.BASE_SEPOLIA_LOCAL_RPC_URL
           : process.env.BASE_SEPOLIA_RPC_URL
       ),
     });
-  } else if (chainId == 42161) {
-    // Arbitrum
+  } else if (chainId === 421614) {
+    // Arbitrum Sepolia
     return createPublicClient({
-      chain:
-        envMode === "mainnet"
-          ? arbitrum
-          : envMode === "local"
-          ? anvil
-          : arbitrumSepolia,
+      chain: arbitrumSepolia,
       transport: http(
-        envMode === "mainnet"
-          ? process.env.ARBITRUM_RPC_URL
-          : envMode === "local"
-          ? process.env.ARBITRUM_LOCAL_RPC_URL
+        envMode === "dev"
+          ? process.env.ARBITRUM_SEPOLIA_LOCAL_RPC_URL
           : process.env.ARBITRUM_SEPOLIA_RPC_URL
       ),
     });
-  } else if (chainId == 130) {
-    // unichain, TODO by upgrading viem
+  } else if (chainId === 1301) {
+    // Unichain Sepolia, TODO by upgrading viem
     return createPublicClient({
-      chain:
-        envMode === "mainnet"
-          ? arbitrum
-          : envMode === "local"
-          ? anvil
-          : arbitrumSepolia,
+      chain: sepolia,
       transport: http(
-        envMode === "mainnet"
-          ? process.env.UNICHAIN_RPC_URL
-          : envMode === "local"
-          ? process.env.UNICHAIN_LOCAL_RPC_URL
+        envMode === "dev"
+          ? process.env.UNICHAIN_SEPOLIA_LOCAL_RPC_URL
           : process.env.UNICHAIN_SEPOLIA_RPC_URL
       ),
+    });
+  } else if (chainId === 31337) {
+    // Localhost
+    return createPublicClient({
+      chain: anvil,
+      transport: http("http://localhost:8545"),
     });
   } else {
     throw new Error(`Unsupported chainId: ${chainId}`);
