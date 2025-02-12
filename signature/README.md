@@ -34,6 +34,8 @@ bun run dev
 
 ```bash
 curl -G 'http:/localhost:3000/sign' --data-urlencode 'campaignId=1' --data-urlencode 'txnHashes=0x77014b4caad9c07a4840d6874d6f219ec3476c0311c90036e5f2e4c8072396f6,0xa2b356e88e7b8a2992711790e57a4c0dba7d409d97ea19cd42102f39dbddc3c9'
+
+curl -G 'http:/localhost:42069/sign' --data-urlencode 'chainId=31337' --data-url 'txnHashes=0xfbc01ba8a540a295443f14fbcdcadf787040be875b31df79f25d64a0225a9051'
 ```
 
 6. Provide Signature to Contract
