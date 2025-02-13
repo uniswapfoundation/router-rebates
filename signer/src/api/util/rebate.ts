@@ -1,5 +1,4 @@
 import { Client, createClient } from "@ponder/client";
-import schema from "ponder:schema";
 import { eq } from "drizzle-orm";
 import {
   parseAbi,
@@ -11,7 +10,8 @@ import {
   type TransactionReceipt,
 } from "viem";
 import { getClient } from "./chain";
-import * as foo from "../../../ponder.schema";
+import schema from "ponder:schema";
+import { db as foobar } from "ponder:api";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -67,15 +67,16 @@ export async function calculateRebate(
     swapEvents.map(async (swapEvent) => {
       const { id } = swapEvent.args;
       console.log("QUERY", id);
-      // const result = await db.db
-      //   .select({ hooks: schema.pool.hooks })
-      //   .from(schema.pool)
-      //   .where(eq(schema.pool.poolId, id));
+      const result = await foobar
+        .select({ hooks: schema.pool.hooks })
+        .from(schema.pool)
+        .where(eq(schema.pool.poolId, id));
       const dbClient = createClient("http://localhost:42069/sql", {
         schema,
       });
       // const result = await dbClient.db.select().from(foo.pool).limit(5);
-      const result = await dbClient.db.query.pool.findFirst();
+      // const result = await foobar.query.pool.findFirst();
+      console.log(result);
       console.log("BUGG");
 
       if (result.length > 0 && result[0]?.hooks !== zeroAddress) {
