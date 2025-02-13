@@ -11,7 +11,7 @@ import {
 } from "viem";
 import { getClient } from "./chain";
 import schema from "ponder:schema";
-import { db as foobar } from "ponder:api";
+import { db as dbClient } from "ponder:api";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -66,18 +66,10 @@ export async function calculateRebate(
   const rebates = await Promise.all(
     swapEvents.map(async (swapEvent) => {
       const { id } = swapEvent.args;
-      console.log("QUERY", id);
-      const result = await foobar
+      const result = await dbClient
         .select({ hooks: schema.pool.hooks })
         .from(schema.pool)
         .where(eq(schema.pool.poolId, id));
-      const dbClient = createClient("http://localhost:42069/sql", {
-        schema,
-      });
-      // const result = await dbClient.db.select().from(foo.pool).limit(5);
-      // const result = await foobar.query.pool.findFirst();
-      console.log(result);
-      console.log("BUGG");
 
       if (result.length > 0 && result[0]?.hooks !== zeroAddress) {
         return rebatePerSwap + rebatePerHook;

@@ -94,7 +94,7 @@ export function getClient(chainId: number): PublicClient {
     // Localhost
     return createPublicClient({
       chain: anvil,
-      transport: http("http://localhost:8545"),
+      transport: http("http://127.0.0.1:8545"),
     });
   } else {
     throw new Error(`Unsupported chainId: ${chainId}`);

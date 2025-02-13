@@ -29,9 +29,9 @@ app.get("/sign", async (c) => {
   const publicClient = getClient(Number(chainId));
   const txnHashList = txnHashes.split(",") as `0x${string}`[];
 
-  await batch(dbclient, publicClient, txnHashList);
+  const result = await batch(dbclient, publicClient, txnHashList);
 
-  return c.text("HELLO WORLD");
+  return c.json(result);
 });
 
 export default app;
