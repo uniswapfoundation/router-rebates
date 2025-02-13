@@ -8,7 +8,16 @@ library HookMiner {
     uint160 constant FLAG_MASK = 0x3FFF;
 
     // Maximum number of iterations to find a salt, avoid infinite loops
-    uint256 constant MAX_LOOP = 100_000;
+    uint256 constant MAX_LOOP = 150_000;
+
+    function find(address deployer, uint160 flags, bytes memory creationCode, bytes memory constructorArgs)
+        internal
+        view
+        returns (address, bytes32)
+    {
+        (address a, bytes32 s) = find(0, deployer, flags, creationCode, constructorArgs);
+        return (a, s);
+    }
 
     /// @notice Find a salt that produces a hook address with the desired `flags`
     /// @param deployer The address that will deploy the hook. In `forge test`, this will be the test contract `address(this)` or the pranking address
@@ -17,16 +26,17 @@ library HookMiner {
     /// @param creationCode The creation code of a hook contract. Example: `type(Counter).creationCode`
     /// @param constructorArgs The encoded constructor arguments of a hook contract. Example: `abi.encode(address(manager))`
     /// @return hookAddress salt and corresponding address that was found. The salt can be used in `new Hook{salt: salt}(<constructor arguments>)`
-    function find(address deployer, uint160 flags, bytes memory creationCode, bytes memory constructorArgs)
+    function find(uint256 offset, address deployer, uint160 flags, bytes memory creationCode, bytes memory constructorArgs)
         internal
         view
         returns (address, bytes32)
     {
+        flags = flags & FLAG_MASK;
         address hookAddress;
         bytes memory creationCodeWithArgs = abi.encodePacked(creationCode, constructorArgs);
 
-        uint256 salt;
-        for (salt; salt < MAX_LOOP; salt++) {
+        uint256 salt = offset;
+        for (salt; salt < MAX_LOOP + offset; salt++) {
             hookAddress = computeAddress(deployer, salt, creationCodeWithArgs);
             if (uint160(hookAddress) & FLAG_MASK == flags && hookAddress.code.length == 0) {
                 return (hookAddress, bytes32(salt));

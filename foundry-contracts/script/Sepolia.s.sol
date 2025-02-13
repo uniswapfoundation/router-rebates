@@ -54,12 +54,13 @@ contract SepoliaScript is Script {
 
         vm.startBroadcast();
         hook1 = deployHook(
+            100_000,
             uint160(
                 Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG | Hooks.BEFORE_ADD_LIQUIDITY_FLAG
                     | Hooks.BEFORE_REMOVE_LIQUIDITY_FLAG
             )
         );
-        hook2 = deployHook(uint160(Hooks.BEFORE_SWAP_FLAG));
+        hook2 = deployHook(400_000, uint160(Hooks.BEFORE_SWAP_FLAG));
         vm.stopBroadcast();
 
         vm.startBroadcast();
@@ -147,11 +148,11 @@ contract SepoliaScript is Script {
         swapRouter.swap(key, params, testSettings, ZERO_BYTES);
     }
 
-    function deployHook(uint160 flags) internal returns (address) {
+    function deployHook(uint256 offset, uint160 flags) internal returns (address) {
         // Mine a salt that will produce a hook address with the correct flags
         bytes memory constructorArgs;
         (address hookAddress, bytes32 salt) =
-            HookMiner.find(CREATE2_DEPLOYER, flags, type(Counter).creationCode, constructorArgs);
+            HookMiner.find(offset, CREATE2_DEPLOYER, flags, type(Counter).creationCode, constructorArgs);
 
         // Deploy the hook using CREATE2
         Counter counter = new Counter{salt: salt}();
