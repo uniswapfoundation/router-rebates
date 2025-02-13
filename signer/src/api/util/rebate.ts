@@ -1,4 +1,3 @@
-import { Client, createClient } from "@ponder/client";
 import { eq } from "drizzle-orm";
 import {
   parseAbi,
@@ -7,7 +6,6 @@ import {
   zeroAddress,
   type Address,
   type PublicClient,
-  type TransactionReceipt,
 } from "viem";
 import { getClient } from "./chain";
 import schema from "ponder:schema";
@@ -23,7 +21,6 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 
 /// @dev rebates are only calculated for the first swap router
 export async function calculateRebate(
-  db: Client,
   client: PublicClient,
   txnHash: `0x${string}`
 ): Promise<{

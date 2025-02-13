@@ -1,14 +1,14 @@
 import { db } from "ponder:api";
 import schema from "ponder:schema";
 import { Hono } from "hono";
-import { client, graphql } from "ponder";
+import { graphql } from "ponder";
 import { batch } from "./util/main";
 import { getClient } from "./util/chain";
-import { createClient } from "@ponder/client";
 
 const app = new Hono();
 
-app.use("/sql/*", client({ db, schema }));
+// Enable this if we want other microservices to access the database
+// app.use("/sql/*", client({ db, schema }));
 
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
@@ -25,11 +25,10 @@ app.get("/sign", async (c) => {
     );
   }
 
-  const dbclient = createClient("http://localhost:42069/sql", { schema });
   const publicClient = getClient(Number(chainId));
   const txnHashList = txnHashes.split(",") as `0x${string}`[];
 
-  const result = await batch(dbclient, publicClient, txnHashList);
+  const result = await batch(publicClient, txnHashList);
 
   return c.json(result);
 });
