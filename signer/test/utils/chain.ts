@@ -8,7 +8,7 @@ import {
 } from "viem";
 import { publicClient, wallet1, walletClient } from "./constants";
 
-import { abi as RouterRebatesABI } from "../../../../foundry-contracts/out/RouterRebates.sol/RouterRebates.json";
+import { abi as RouterRebatesABI } from "../../../foundry-contracts/out/RouterRebates.sol/RouterRebates.json";
 import { anvil } from "viem/chains";
 
 export async function claimWithSignature(

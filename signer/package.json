@@ -18,7 +18,11 @@
     "viem": "^2.21.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.8",
+    "@babel/preset-env": "^7.26.8",
+    "@babel/preset-typescript": "^7.26.0",
     "@types/node": "^20.9.0",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.9.7",
     "ts-jest": "^29.2.5",

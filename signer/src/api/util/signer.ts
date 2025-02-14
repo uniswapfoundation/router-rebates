@@ -35,11 +35,23 @@ export async function sign(
     process.env.ETH_SIGNER_PRIVATE_KEY as `0x${string}`
   );
 
+  console.log("signing", {
+    message: {
+      claimer: getAddress(claimer),
+      beneficiary: getAddress(beneficiary),
+      chainId: chainId,
+      hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])),
+      startBlockNumber: startBlockNumber,
+      endBlockNumber: endBlockNumber,
+      amount: amount,
+    },
+  });
+
   const signature = await account.signTypedData({
     domain: {
       name: process.env.REBATE_CONTRACT_NAME,
       version: process.env.REBATE_CONTRACT_VERSION,
-      chainId: 1, // TODO: unichain chainId
+      chainId: Number(process.env.REBATE_CHAIN_ID),
       verifyingContract: getAddress(
         process.env.REBATE_ADDRESS as `0x${string}`
       ),
