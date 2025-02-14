@@ -1,14 +1,11 @@
 import { privateKeyToAccount } from "viem/accounts";
 import {
-  createPublicClient,
   encodePacked,
   getAddress,
-  http,
   keccak256,
   parseAbiItem,
   type PublicClient,
 } from "viem";
-import { mainnet } from "viem/chains";
 
 const types = {
   Claimable: [

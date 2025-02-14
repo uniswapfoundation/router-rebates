@@ -19,10 +19,6 @@ describe("claim", () => {
 
   let rebateAddress: Address;
 
-  // let singleHopHash: `0x${string}`;
-
-  // let rewardTokenAddress: Address;
-
   beforeAll(() => {
     // Extract the router addresses
     router01Address = getContractAddressByContractName("PoolSwapTestClaimable");
@@ -30,21 +26,6 @@ describe("claim", () => {
     router02Address = getContractAddressByContractName("UniversalRouter");
 
     rebateAddress = getContractAddressByContractName("RouterRebates");
-
-    // const singleHopHash = ANVIL_ARTIFACT.transactions.find(
-    //   (transaction) =>
-    //     transaction.transactionType === "CALL" &&
-    //     transaction.contractAddress === router01Address &&
-    //     transaction.function?.startsWith("swap")
-    // )?.hash as `0x${string}`;
-
-    // extract the reward token based on campaign creation
-    // const rewardTokenAddress = ANVIL_ARTIFACT.transactions.find(
-    //   (transaction) =>
-    //     transaction.transactionType === "CALL" &&
-    //     transaction.contractAddress === rebateAddress &&
-    //     transaction.function?.startsWith("createCampaign")
-    // )?.arguments![1] as `0x${string}`;
   });
 
   /// @dev batch transaction hashes

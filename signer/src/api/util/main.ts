@@ -1,7 +1,6 @@
 import type { Address, PublicClient } from "viem";
 import { calculateRebate } from "./rebate";
 import { getRebateClaimer, sign } from "./signer";
-import { Client } from "@ponder/client";
 
 export async function batch(
   publicClient: PublicClient,
