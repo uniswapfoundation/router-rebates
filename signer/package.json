@@ -1,24 +1,31 @@
 {
-  "name": "poolid-indexer",
+  "name": "signer",
   "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "ponder dev",
+    "dev": "NODE_ENV=dev ponder dev --log-level warn",
     "start": "ponder start",
+    "db": "ponder db",
     "codegen": "ponder codegen",
     "lint": "eslint .",
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@ponder/core": "^0.6.3",
+    "@ponder/client": "^0.9.7",
     "hono": "^4.5.0",
+    "ponder": "^0.9.7",
     "viem": "^2.21.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.8",
+    "@babel/preset-env": "^7.26.8",
+    "@babel/preset-typescript": "^7.26.0",
     "@types/node": "^20.9.0",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.53.0",
-    "eslint-config-ponder": "^0.6.3",
+    "eslint-config-ponder": "^0.9.7",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.2.2"
   },
   "engines": {

@@ -1,10 +1,8 @@
-import { Database } from "bun:sqlite";
 import type { Address, PublicClient } from "viem";
 import { calculateRebate } from "./rebate";
 import { getRebateClaimer, sign } from "./signer";
 
 export async function batch(
-  db: Database,
   publicClient: PublicClient,
   txnHashes: `0x${string}`[]
 ): Promise<{
@@ -15,7 +13,7 @@ export async function batch(
   endBlockNumber: string;
 }> {
   const result = await Promise.all(
-    txnHashes.map((txnHash) => calculateRebate(db, publicClient, txnHash))
+    txnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
   );
 
   const amount = result.reduce(

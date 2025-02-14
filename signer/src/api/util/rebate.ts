@@ -1,4 +1,4 @@
-import { Database } from "bun:sqlite";
+import { eq } from "drizzle-orm";
 import {
   parseAbi,
   parseAbiItem,
@@ -6,8 +6,10 @@ import {
   zeroAddress,
   type Address,
   type PublicClient,
-  type TransactionReceipt,
 } from "viem";
+import { getClient } from "./chain";
+import schema from "ponder:schema";
+import { db as dbClient } from "ponder:api";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -19,7 +21,6 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 
 /// @dev rebates are only calculated for the first swap router
 export async function calculateRebate(
-  db: Database,
   client: PublicClient,
   txnHash: `0x${string}`
 ): Promise<{
@@ -29,9 +30,8 @@ export async function calculateRebate(
   blockNumber: bigint;
 }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
-  const { rebatePerSwap, rebatePerHook, rebateFixed } = await getRebatePerEvent(
-    client
-  );
+  const { rebatePerSwap, rebatePerHook, rebateFixed } =
+    await getRebatePerEvent();
 
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
@@ -60,22 +60,22 @@ export async function calculateRebate(
   // TODO: require all events are from the same sender
 
   // iterate each swap event, calculating the rebate for the sender (swap router)
-  let gasUsedToRebate = swapEvents.reduce(
-    (gasUsedToRebate: bigint, swapEvent) => {
-      // get poolId from swap event
+  const rebates = await Promise.all(
+    swapEvents.map(async (swapEvent) => {
       const { id } = swapEvent.args;
+      const result = await dbClient
+        .select({ hooks: schema.pool.hooks })
+        .from(schema.pool)
+        .where(eq(schema.pool.poolId, id));
 
-      // check if poolId has hooks
-      const query = db.query(`SELECT hooks FROM PoolIdMap WHERE id = $poolId;`);
-      let record = query.get({ $poolId: id });
-      if (record === null) record = { hooks: zeroAddress };
-
-      return (record as { hooks: Address }).hooks === zeroAddress
-        ? gasUsedToRebate
-        : gasUsedToRebate + rebatePerSwap + rebatePerHook;
-    },
-    0n
+      if (result.length > 0 && result[0]?.hooks !== zeroAddress) {
+        return rebatePerSwap + rebatePerHook;
+      } else {
+        return 0n;
+      }
+    })
   );
+  let gasUsedToRebate = rebates.reduce((total, rebate) => total + rebate, 0n);
 
   // append the fixed rebate for token transfers
   gasUsedToRebate += rebateFixed;
@@ -92,11 +92,12 @@ export async function calculateRebate(
   };
 }
 
-async function getRebatePerEvent(client: PublicClient): Promise<{
+async function getRebatePerEvent(): Promise<{
   rebatePerSwap: bigint;
   rebatePerHook: bigint;
   rebateFixed: bigint;
 }> {
+  const client = getClient(Number(process.env.REBATE_CHAIN_ID));
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],

@@ -1,14 +1,11 @@
 import { privateKeyToAccount } from "viem/accounts";
 import {
-  createPublicClient,
   encodePacked,
   getAddress,
-  http,
   keccak256,
   parseAbiItem,
   type PublicClient,
 } from "viem";
-import { mainnet } from "viem/chains";
 
 const types = {
   Claimable: [
@@ -39,7 +36,7 @@ export async function sign(
     domain: {
       name: process.env.REBATE_CONTRACT_NAME,
       version: process.env.REBATE_CONTRACT_VERSION,
-      chainId: 1, // TODO: unichain chainId
+      chainId: Number(process.env.REBATE_CHAIN_ID),
       verifyingContract: getAddress(
         process.env.REBATE_ADDRESS as `0x${string}`
       ),

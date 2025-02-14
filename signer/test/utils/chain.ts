@@ -1,15 +1,7 @@
-import {
-  createWalletClient,
-  encodePacked,
-  erc20Abi,
-  http,
-  keccak256,
-  type Address,
-} from "viem";
+import { type Address } from "viem";
 import { publicClient, wallet1, walletClient } from "./constants";
 
-import { abi as RouterRebatesABI } from "../../../../foundry-contracts/out/RouterRebates.sol/RouterRebates.json";
-import { anvil } from "viem/chains";
+import { abi as RouterRebatesABI } from "../../../foundry-contracts/out/RouterRebates.sol/RouterRebates.json";
 
 export async function claimWithSignature(
   chainId: bigint,
