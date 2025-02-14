@@ -32,18 +32,6 @@ export async function sign(
     process.env.ETH_SIGNER_PRIVATE_KEY as `0x${string}`
   );
 
-  console.log("signing", {
-    message: {
-      claimer: getAddress(claimer),
-      beneficiary: getAddress(beneficiary),
-      chainId: chainId,
-      hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes.sort()])),
-      startBlockNumber: startBlockNumber,
-      endBlockNumber: endBlockNumber,
-      amount: amount,
-    },
-  });
-
   const signature = await account.signTypedData({
     domain: {
       name: process.env.REBATE_CONTRACT_NAME,
@@ -72,7 +60,6 @@ export async function getRebateClaimer(
   publicClient: PublicClient,
   beneficiary: `0x${string}`
 ): Promise<`0x${string}`> {
-  console.log(beneficiary);
   return await publicClient.readContract({
     address: beneficiary,
     abi: [parseAbiItem("function rebateClaimer() view returns (address)")],

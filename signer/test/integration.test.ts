@@ -54,18 +54,6 @@ describe("claim", () => {
       };
     expect(claimer).toBe(wallet1.address);
 
-    console.log({
-      message: {
-        claimer: getAddress(claimer),
-        beneficiary: getAddress(router01Address),
-        chainId: BigInt(31337),
-        hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes])),
-        startBlockNumber: BigInt(startBlockNumber),
-        endBlockNumber: BigInt(endBlockNumber),
-        amount: BigInt(amount),
-      },
-    });
-
     // recover the signer address
     const valid = await verifyTypedData({
       address: getAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
