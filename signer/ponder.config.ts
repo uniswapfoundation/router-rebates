@@ -2,7 +2,6 @@ import { createConfig } from "ponder";
 import { http } from "viem";
 
 import { PoolManagerAbi } from "./abis/PoolManagerAbi";
-import { transactions } from "../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json";
 
 export default createConfig({
   ordering: "multichain",
@@ -68,8 +67,14 @@ export default createConfig({
       maxRequestsPerSecond: process.env.PONDER_RPC_URL_421614 !== "" ? 15 : 5,
     },
     anvil: {
-      chainId: 31337,
-      transport: http("http://127.0.0.1:8545"),
+      chainId: process.env.NODE_ENV === "dev" ? 31337 : 11155111,
+      transport: http(
+        process.env.NODE_ENV === "dev"
+          ? "http://127.0.0.1:8545"
+          : "https://sepolia.gateway.tenderly.co"
+      ),
+      maxRequestsPerSecond: process.env.NODE_ENV === "dev" ? 15 : 1,
+      pollingInterval: process.env.NODE_ENV === "dev" ? 1000 : 10000,
     },
   },
   contracts: {
@@ -124,12 +129,8 @@ export default createConfig({
           startBlock: process.env.NODE_ENV === "dev" ? "latest" : 105909222,
         },
         anvil: {
-          address: transactions.find(
-            (tx) =>
-              tx.transactionType === "CREATE" &&
-              tx.contractName === "PoolManager"
-          )?.contractAddress as `0x${string}`,
-          startBlock: 0,
+          address: process.env.ANVIL_POOL_MANAGER_ADDRESS as `0x${string}`,
+          startBlock: process.env.NODE_ENV === "dev" ? 0 : "latest",
         },
       },
       abi: PoolManagerAbi,

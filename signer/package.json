@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=dev ponder dev --log-level warn",
+    "dev": "ANVIL_POOLMANAGER_ADDRESS=$(jq -r '.transactions[] | select(.contractName == \"PoolManager\" and .transactionType == \"CREATE\") | .contractAddress' ../foundry-contracts/broadcast/Anvil.s.sol/31337/run-latest.json) NODE_ENV=dev ponder dev --log-level warn",
     "start": "ponder start",
     "db": "ponder db",
     "codegen": "ponder codegen",
