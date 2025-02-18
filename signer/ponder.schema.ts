@@ -1,9 +1,9 @@
-import { index, onchainTable } from "ponder";
+import { index, onchainTable, primaryKey } from "ponder";
 
 export const pool = onchainTable(
   "pool",
   (t) => ({
-    poolId: t.hex().notNull().primaryKey(),
+    poolId: t.hex().notNull(),
     currency0: t.hex().notNull(),
     currency1: t.hex().notNull(),
     fee: t.integer().notNull(),
@@ -12,6 +12,7 @@ export const pool = onchainTable(
     chainId: t.integer().notNull(),
   }),
   (table) => ({
+    pk: primaryKey({ columns: [table.poolId, table.chainId] }),
     poolIdIndex: index().on(table.poolId),
     chainIdIndex: index().on(table.chainId),
   })
