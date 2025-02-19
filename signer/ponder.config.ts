@@ -66,16 +66,12 @@ export default createConfig({
       transport: http(process.env.PONDER_RPC_URL_421614),
       maxRequestsPerSecond: process.env.PONDER_RPC_URL_421614 !== "" ? 15 : 5,
     },
-    anvil: {
-      chainId: process.env.NODE_ENV === "dev" ? 31337 : 11155111,
-      transport: http(
-        process.env.NODE_ENV === "dev"
-          ? "http://127.0.0.1:8545"
-          : "https://sepolia.gateway.tenderly.co"
-      ),
-      maxRequestsPerSecond: process.env.NODE_ENV === "dev" ? 15 : 1,
-      pollingInterval: process.env.NODE_ENV === "dev" ? 1000 : 10000,
-    },
+    ...(process.env.NODE_ENV === "dev" && {
+      anvil: {
+        chainId: 31337,
+        transport: http("http://127.0.0.1:8545"),
+      },
+    }),
   },
   contracts: {
     PoolManager: {
@@ -128,10 +124,11 @@ export default createConfig({
           address: "0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317",
           startBlock: process.env.NODE_ENV === "dev" ? "latest" : 105909222,
         },
-        anvil: {
-          address: process.env.ANVIL_POOL_MANAGER_ADDRESS as `0x${string}`,
-          startBlock: process.env.NODE_ENV === "dev" ? 0 : "latest",
-        },
+        ...(process.env.NODE_ENV === "dev" && {
+          anvil: {
+            address: process.env.ANVIL_POOL_MANAGER_ADDRESS as `0x${string}`,
+          },
+        }),
       },
       abi: PoolManagerAbi,
       filter: [
