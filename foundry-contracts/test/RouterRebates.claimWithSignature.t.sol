@@ -58,7 +58,13 @@ contract RouterRebatesTest is Test {
     ) public pure {
         assertEq(
             ClaimableHash.hashClaimable(
-                claimer, beneficiary, chainId, keccak256(abi.encodePacked(transactionHashes)), startBlockNumber, endBlockNumber, amount
+                claimer,
+                beneficiary,
+                chainId,
+                keccak256(abi.encodePacked(transactionHashes)),
+                startBlockNumber,
+                endBlockNumber,
+                amount
             ),
             keccak256(
                 abi.encode(

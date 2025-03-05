@@ -122,7 +122,7 @@ contract AnvilScript is Script {
     function deployUniswapV4() internal {
         manager = new PoolManager(address(0));
         lpRouter = new PoolModifyLiquidityTest(manager);
-        swapRouter = new PoolSwapTestClaimable(manager, rebates);
+        swapRouter = new PoolSwapTestClaimable(manager);
     }
 
     function createPoolWithLiquidity(address hookAddress) internal returns (PoolKey memory _poolKey) {

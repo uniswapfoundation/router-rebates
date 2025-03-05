@@ -18,14 +18,7 @@ library ClaimableHash {
         // need to keccak256/encodePacked transactionHashes as its a dynamic type
         return keccak256(
             abi.encode(
-                CLAIMABLE_TYPEHASH,
-                claimer,
-                beneficiary,
-                chainId,
-                txnListHash,
-                startBlockNumber,
-                endBlockNumber,
-                amount
+                CLAIMABLE_TYPEHASH, claimer, beneficiary, chainId, txnListHash, startBlockNumber, endBlockNumber, amount
             )
         );
     }
