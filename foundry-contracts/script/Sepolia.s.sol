@@ -17,7 +17,6 @@ import {Constants} from "v4-core/src/../test/utils/Constants.sol";
 import {TickMath} from "v4-core/src/libraries/TickMath.sol";
 import {CurrencyLibrary, Currency} from "v4-core/src/types/Currency.sol";
 
-import {RouterRebates} from "../src/RouterRebates.sol";
 import {PoolSwapTestClaimable} from "../src/test/PoolSwapTestClaimable.sol";
 import {Counter} from "./mocks/Counter.sol";
 import {HookMiner} from "../test/utils/HookMiner.sol";
@@ -25,7 +24,6 @@ import {HookMiner} from "../test/utils/HookMiner.sol";
 contract SepoliaScript is Script {
     address constant CREATE2_DEPLOYER = address(0x4e59b44847b379578588920cA78FbF26c0B4956C);
     IPoolManager constant manager = IPoolManager(address(0xE03A1074c86CFeDd5C142C4F04F1a1536e203543));
-    RouterRebates constant rebates = RouterRebates(payable(address(0x27D790334C93618204762E4eC344B11d7b7693c3)));
     PoolModifyLiquidityTest lpRouter = PoolModifyLiquidityTest(address(0x0C478023803a644c94c4CE1C1e7b9A087e411B0A));
     bytes constant ZERO_BYTES = new bytes(0);
 
@@ -49,7 +47,8 @@ contract SepoliaScript is Script {
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        swapRouter = new PoolSwapTestClaimable(manager, rebates);
+        swapRouter = new PoolSwapTestClaimable(manager);
+        swapRouter.setClaimer(0x7024cc7e60D6560f0B5877DA2bb921FCbF1f4375);
         vm.stopBroadcast();
 
         vm.startBroadcast();
