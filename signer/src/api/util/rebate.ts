@@ -78,7 +78,7 @@ export async function calculateRebate(
   let gasUsedToRebate = rebates.reduce((total, rebate) => total + rebate, 0n);
 
   // append the fixed rebate for token transfers
-  gasUsedToRebate += rebateFixed;
+  if (gasUsedToRebate != 0n) gasUsedToRebate += rebateFixed;
 
   const maxGasToRebate = (txnReceipt.gasUsed * 80n) / 100n; // rebate a max of 80% of gasUsed
   gasUsedToRebate =
@@ -87,7 +87,6 @@ export async function calculateRebate(
   return {
     beneficiary,
     gasToRebate: gasUsedToRebate * gasPrice,
-    txnHash: gasUsedToRebate === 0n ? "0x0" : txnHash,
     blockNumber: txnReceipt.blockNumber,
   };
 }
