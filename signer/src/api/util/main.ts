@@ -35,7 +35,6 @@ export async function batch(
     claimer,
     beneficiary,
     BigInt(await publicClient.getChainId()),
-    txnHashes,
     startBlockNumber,
     endBlockNumber,
     amount
