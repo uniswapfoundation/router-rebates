@@ -54,7 +54,6 @@ contract RouterRebates is EIP712, Owned {
         address beneficiary,
         address recipient,
         uint256 amount,
-        bytes32 txnListHash,
         BlockNumberRange calldata blockRange,
         bytes calldata signature
     ) external {
@@ -64,13 +63,7 @@ contract RouterRebates is EIP712, Owned {
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest = ClaimableHash.hashClaimable(
-            msg.sender,
-            beneficiary,
-            chainId,
-            txnListHash,
-            blockRange.startBlockNumber,
-            blockRange.endBlockNumber,
-            amount
+            msg.sender, beneficiary, chainId, blockRange.startBlockNumber, blockRange.endBlockNumber, amount
         );
         signature.verify(_hashTypedDataV4(digest), signer);
 
