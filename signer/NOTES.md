@@ -28,7 +28,7 @@ curl -G 'https://router-rebates-testnet.up.railway.app/sign' --data-urlencode 'c
 cast send \
   --rpc-url sepolia \
   --private-key $SEPOLIA_PK \
-  0x8c93cc27753df7b5fe735062a4fd8f0e5833e142 \
+  0x9231d72b6ad3cc298381bcc23ad9d807d51ea7ff \
   "claimWithSignature(uint256,address,address,uint256,bytes32,(uint128,uint128),bytes)" \
   11155111 \
   0x6e9acd753e56f15c779f0348c95b97ce83d8796d \

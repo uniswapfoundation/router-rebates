@@ -79,7 +79,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
 
    |          | RouterRebates                                |
    | -------- | -------------------------------------------- |
-   | Sepolia  | `0x8c93cc27753df7b5fe735062a4fd8f0e5833e142` |
+   | Sepolia  | `0x9231d72b6ad3cc298381bcc23ad9d807d51ea7ff` |
    | Unichain | TBD                                          |
 
    ***
