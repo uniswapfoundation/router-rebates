@@ -42,7 +42,7 @@ contract RouterRebatesTest is Test {
         assertEq(
             ClaimableHash.CLAIMABLE_TYPEHASH,
             keccak256(
-                "Claimable(address claimer,address beneficiary,uint256 chainId,bytes32 hashedTxns,uint128 startBlockNumber,uint128 endBlockNumber,uint256 amount)"
+                "Claimable(address claimer,address beneficiary,uint256 chainId,uint128 startBlockNumber,uint128 endBlockNumber,uint256 amount)"
             )
         );
     }
@@ -57,22 +57,13 @@ contract RouterRebatesTest is Test {
         uint256 amount
     ) public pure {
         assertEq(
-            ClaimableHash.hashClaimable(
-                claimer,
-                beneficiary,
-                chainId,
-                keccak256(abi.encodePacked(transactionHashes)),
-                startBlockNumber,
-                endBlockNumber,
-                amount
-            ),
+            ClaimableHash.hashClaimable(claimer, beneficiary, chainId, startBlockNumber, endBlockNumber, amount),
             keccak256(
                 abi.encode(
                     ClaimableHash.CLAIMABLE_TYPEHASH,
                     claimer,
                     beneficiary,
                     chainId,
-                    keccak256(abi.encodePacked(transactionHashes)),
                     startBlockNumber,
                     endBlockNumber,
                     amount
@@ -93,13 +84,7 @@ contract RouterRebatesTest is Test {
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
@@ -122,13 +107,7 @@ contract RouterRebatesTest is Test {
 
         vm.prank(bob);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
 
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
@@ -151,13 +130,7 @@ contract RouterRebatesTest is Test {
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -172,26 +145,14 @@ contract RouterRebatesTest is Test {
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
 
         // signature cannot be re-used
         vm.expectRevert(InvalidBlockNumber.selector);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -208,13 +169,7 @@ contract RouterRebatesTest is Test {
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
 
@@ -231,13 +186,7 @@ contract RouterRebatesTest is Test {
         signature = abi.encodePacked(r, s, v);
 
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -252,13 +201,7 @@ contract RouterRebatesTest is Test {
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
         assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
 
@@ -272,13 +215,7 @@ contract RouterRebatesTest is Test {
 
         vm.expectRevert(InvalidBlockNumber.selector);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -306,13 +243,7 @@ contract RouterRebatesTest is Test {
 
         vm.expectRevert(InvalidBlockNumber.selector);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -328,13 +259,7 @@ contract RouterRebatesTest is Test {
 
         vm.expectRevert(SignatureVerification.InvalidSigner.selector);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -352,13 +277,7 @@ contract RouterRebatesTest is Test {
         vm.expectRevert();
         vm.prank(beneficiary);
         rebates.claimWithSignature(
-            chainId,
-            beneficiary,
-            recipient,
-            amount,
-            keccak256(abi.encodePacked(transactionHashes)),
-            BlockNumberRange(startBlockNumber, endBlockNumber),
-            signature
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
         );
     }
 
@@ -383,7 +302,6 @@ contract RouterRebatesTest is Test {
                         claimer,
                         beneficiary,
                         chainId,
-                        keccak256(abi.encodePacked(transactionHashes)),
                         startBlockNumber,
                         endBlockNumber,
                         amount

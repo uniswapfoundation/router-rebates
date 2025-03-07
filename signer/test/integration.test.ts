@@ -68,7 +68,6 @@ describe("claim", () => {
           { name: "claimer", type: "address" },
           { name: "beneficiary", type: "address" },
           { name: "chainId", type: "uint256" },
-          { name: "hashedTxns", type: "bytes32" },
           { name: "startBlockNumber", type: "uint128" },
           { name: "endBlockNumber", type: "uint128" },
           { name: "amount", type: "uint256" },
@@ -79,7 +78,6 @@ describe("claim", () => {
         claimer: getAddress(claimer),
         beneficiary: getAddress(router01Address),
         chainId: BigInt(31337),
-        hashedTxns: keccak256(encodePacked(["bytes32[]"], [txnHashes])),
         startBlockNumber: BigInt(startBlockNumber),
         endBlockNumber: BigInt(endBlockNumber),
         amount: BigInt(amount),
@@ -124,7 +122,6 @@ describe("claim", () => {
       router01Address,
       wallet1.address,
       tokensClaimed,
-      keccak256(encodePacked(["bytes32[]"], [txnHashes])),
       BigInt(startBlockNumber),
       BigInt(endBlockNumber),
       signature

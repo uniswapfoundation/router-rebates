@@ -10,13 +10,7 @@
 curl -G 'https://router-rebates-testnet.up.railway.app/sign' --data-urlencode 'chainId=11155111' --data-urlencode 'txnHashes=0x6a7fb847ae79fbd3689e8c103c8b8c35a27568ab7cf51595d325faa9e559fafe,0x8b978e9082074e5483023f92754465198b6040ce75787fc4427ba4ec25057aaa'
 ```
 
-4. Hash the sorted transactions
-
-```
-cast keccak $(cast abi-encode --packed "(bytes32[])" "[0x6a7fb847ae79fbd3689e8c103c8b8c35a27568ab7cf51595d325faa9e559fafe,0x8b978e9082074e5483023f92754465198b6040ce75787fc4427ba4ec25057aaa]")
-```
-
-5. Claim rebate
+4. Claim rebate
 
 ```solidity
     function claimWithSignature(
@@ -34,7 +28,7 @@ cast keccak $(cast abi-encode --packed "(bytes32[])" "[0x6a7fb847ae79fbd3689e8c1
 cast send \
   --rpc-url sepolia \
   --private-key $SEPOLIA_PK \
-  0x8c93cc27753df7b5fe735062a4fd8f0e5833e142 \
+  0x9231d72b6ad3cc298381bcc23ad9d807d51ea7ff \
   "claimWithSignature(uint256,address,address,uint256,bytes32,(uint128,uint128),bytes)" \
   11155111 \
   0x6e9acd753e56f15c779f0348c95b97ce83d8796d \

@@ -9,7 +9,6 @@ export async function claimWithSignature(
   beneficiary: Address,
   recipient: Address,
   amount: bigint,
-  txnListHash: `0x${string}`,
   startBlockNumber: bigint,
   endBlockNumber: bigint,
   signature: `0x${string}`
@@ -24,7 +23,6 @@ export async function claimWithSignature(
       beneficiary,
       recipient,
       amount,
-      txnListHash,
       {
         startBlockNumber: startBlockNumber,
         endBlockNumber: endBlockNumber,
