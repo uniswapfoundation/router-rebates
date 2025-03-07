@@ -59,7 +59,7 @@ contract RouterRebates is EIP712, Owned {
         bytes calldata signature
     ) external {
         // startBlockNumber must be less than endBlockNumber
-        if (blockRange.startBlockNumber >= blockRange.endBlockNumber) revert InvalidBlockNumber();
+        if (blockRange.startBlockNumber > blockRange.endBlockNumber) revert InvalidBlockNumber();
         if (blockRange.startBlockNumber < lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization

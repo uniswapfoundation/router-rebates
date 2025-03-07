@@ -291,7 +291,7 @@ contract RouterRebatesTest is Test {
         uint128 startBlockNumber,
         uint128 endBlockNumber
     ) public {
-        vm.assume(endBlockNumber <= startBlockNumber);
+        vm.assume(endBlockNumber < startBlockNumber);
         address recipient = address(1);
         vm.assume(recipient.code.length == 0);
         (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
