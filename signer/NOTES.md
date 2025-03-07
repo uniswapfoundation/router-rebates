@@ -10,13 +10,7 @@
 curl -G 'https://router-rebates-testnet.up.railway.app/sign' --data-urlencode 'chainId=11155111' --data-urlencode 'txnHashes=0x6a7fb847ae79fbd3689e8c103c8b8c35a27568ab7cf51595d325faa9e559fafe,0x8b978e9082074e5483023f92754465198b6040ce75787fc4427ba4ec25057aaa'
 ```
 
-4. Hash the sorted transactions
-
-```
-cast keccak $(cast abi-encode --packed "(bytes32[])" "[0x6a7fb847ae79fbd3689e8c103c8b8c35a27568ab7cf51595d325faa9e559fafe,0x8b978e9082074e5483023f92754465198b6040ce75787fc4427ba4ec25057aaa]")
-```
-
-5. Claim rebate
+4. Claim rebate
 
 ```solidity
     function claimWithSignature(

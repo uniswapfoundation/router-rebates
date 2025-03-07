@@ -75,22 +75,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    }
    ```
 
-4. Hash the _sorted_ transaction hashes
-
-   Solidity:
-
-   ```solidity
-   bytes32[] txnHashes;
-   bytes32 hashed = keccak256(abi.encodePacked(txnHashes));
-   ```
-
-   Cast:
-
-   ```bash
-   cast keccak $(cast abi-encode --packed "(bytes32[])" "[0xABC,0xDEF]")
-   ```
-
-5. Claim the rebate, from the **authorized claimer address**
+4. Claim the rebate, from the **authorized claimer address**
 
    |          | RouterRebates                                |
    | -------- | -------------------------------------------- |
@@ -105,21 +90,19 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
        address beneficiary,
        address recipient,
        uint256 amount,
-       bytes32 txnListHash,
        BlockNumberRange calldata blockRange,
        bytes calldata signature
    ) external;
    ```
 
-   | Name        | Type             | Description                                                                                        | Notes                                                                                          |
-   | ----------- | ---------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-   | chainId     | uint256          | The chainId of the transaction hashes                                                              | The same chainId provided to the `GET /sign request`                                           |
-   | beneficiary | address          | The address of contract that interacted with PoolManager                                           | The swap router contract, should expose a `rebateClaimer() external view returns (address)`    |
-   | recipient   | address          | The recipient of the rebate                                                                        | The address should be able to safely recieve native Ether tokens                               |
-   | amount      | uint256          | The amount of rebate being claimed                                                                 | The amount returned the `GET /sign request`                                                    |
-   | txnListHash | bytes32          | A keccak256 hash of the transaction hashes                                                         | The list of transaction hashes should be alphabetically sorted, and then hashed with keccak256 |
-   | blockRange  | BlockNumberRange | A struct of (uint128,uint128) containing the start and end block numbers of the transaction hashes | Start and end block numbers are returned the `GET /sign request`                               |
-   | signature   | bytes            | A signature authorizing rebate claims                                                              | Returned by the `GET /sign request`. Internally derived from `abi.encodePacked(r, s, v)`       |
+   | Name        | Type             | Description                                                                                        | Notes                                                                                       |
+   | ----------- | ---------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+   | chainId     | uint256          | The chainId of the transaction hashes                                                              | The same chainId provided to the `GET /sign request`                                        |
+   | beneficiary | address          | The address of contract that interacted with PoolManager                                           | The swap router contract, should expose a `rebateClaimer() external view returns (address)` |
+   | recipient   | address          | The recipient of the rebate                                                                        | The address should be able to safely recieve native Ether tokens                            |
+   | amount      | uint256          | The amount of rebate being claimed                                                                 | The amount returned the `GET /sign request`                                                 |
+   | blockRange  | BlockNumberRange | A struct of (uint128,uint128) containing the start and end block numbers of the transaction hashes | Start and end block numbers are returned the `GET /sign request`                            |
+   | signature   | bytes            | A signature authorizing rebate claims                                                              | Returned by the `GET /sign request`. Internally derived from `abi.encodePacked(r, s, v)`    |
 
 # Glossary
 
