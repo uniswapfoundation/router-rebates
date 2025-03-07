@@ -54,16 +54,22 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    ```bash
    curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
      --data-urlencode 'chainId=1' \
-     --data-urlencode 'txnHashes=0x77014b4caad9c07a4840d6874d6f219ec3476c0311c90036e5f2e4c8072396f6,0xa2b356e88e7b8a2992711790e57a4c0dba7d409d97ea19cd42102f39dbddc3c9'
+     --data-urlencode 'txnHashes=0xABC,0xDEF'
    ```
 
 3. Example response:
 
    ```json
    {
+     // rebateClaimer address set by the beneficiary
      "claimer": "0x7024cc7e60D6560f0B5877DA2bb921FCbF1f4375",
+
+     // authorization signature to provide to RouterRebates
      "signature": "0xaac2124f1f581cd5e0e9d743250d01d23972a620caadb9df223650be2b5e057862bb8436fb0be03bdd345067e2766d41a10ed2fb42d61d4729283bfd19fd79a71b",
+
+     // amount of rebate determined, wei units of native Ether tokens
      "amount": "26907876080000",
+
      "startBlockNumber": "7839623",
      "endBlockNumber": "7839623"
    }
@@ -81,7 +87,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    Cast:
 
    ```bash
-   cast keccak $(cast abi-encode --packed "(bytes32[])" "[0x6a7fb847ae79fbd3689e8c103c8b8c35a27568ab7cf51595d325faa9e559fafe,0x8b978e9082074e5483023f92754465198b6040ce75787fc4427ba4ec25057aaa]")
+   cast keccak $(cast abi-encode --packed "(bytes32[])" "[0xABC,0xDEF]")
    ```
 
 5. Claim the rebate, from the **authorized claimer address**
