@@ -130,7 +130,7 @@ function claimWithZkProof(
 ```
    | Name        | Type             | Description                                                                                        | Notes                                                                                       |
    | ----------- | ---------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-   | chainId     | uint256          | The chainId of the transaction hashes                                                              | The same chainId provided to the `GET /zk/new request`                                        |
+   | chainId     | uint64          | The chainId of the transaction hashes                                                              | The same chainId provided to the `GET /zk/new request`                                        |
    | recipient   | address          | The recipient of the rebate                                                                        | The address should be able to safely recieve native Ether tokens                            |
    | _proof   | bytes            | ZK proof received from Brevis backend                                                              |  Included in zk/get/ response object    |
    | _appCircuitOutputs   | bytes[]            | ZK circuit output data                                                               |  Included in zk/get/ response object    |
