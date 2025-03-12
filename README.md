@@ -23,6 +23,14 @@ ethToRebate = gasUsageToRebate * txnReceipt.baseFee
 
 > As a safety precaution against hyper-optimized swaps, the minimum of the above calculation or _80% of transaction gas usage_ is taken
 
+# Glossary
+
+`swap router` / `beneficiary` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`. Can also be thought of as the `sender` address in the `Swap()` event
+
+`claimer` - the address which is claiming the rebate on behalf of the _swap router_ / _beneficiary_
+
+`recipient` - the recipient address that is receiving the rebate
+
 # Router Integrations
 
 Because rebates are claimed on _Unichain_ for trades happening on other networks, _beneficiaries_ need to specify the authorized claimer.
@@ -43,7 +51,7 @@ The Router Rebates initiative offers two flows for claiming rebates. In the sign
 
 To prevent signature replays and/or duplicate claiming, rebate claims operate on a block range. Once a block number has been claimed against, transactions occuring prior to the block number are inelligible for rebates.
 
-1. Gather a list of transaction hashes, for a single chain
+1. Gather a list of transaction hashes, for a single chain. Note the sender of the first Swap event of first tx is treated as the beneficiary. Swap events with non-beneficiary sender are ignored.
 
    ```
    txnHashList = ["0xABC", "0xDEF"]
@@ -104,24 +112,27 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    | blockRange  | BlockNumberRange | A struct of (uint128,uint128) containing the start and end block numbers of the transaction hashes | Start and end block numbers are returned the `GET /sign request`                            |
    | signature   | bytes            | A signature authorizing rebate claims                                                              | Returned by the `GET /sign request`. Internally derived from `abi.encodePacked(r, s, v)`    |
 
-# Glossary
-
-`swap router` / `beneficiary` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`. Can also be thought of as the `sender` address in the `Swap()` event
-
-`claimer` - the address which is claiming the rebate on behalf of the _swap router_ / _beneficiary_
-
-`recipient` - the recipient address that is receiving the rebate
-
-## Claim with Brevis ZK Proof
-
-1. router contract emits event Claimer(address) to indicate which address is authorized to call claim function
-2. router project sends list of tx to Brevis backend `zk/new?chainId=1&txnHashes=0x123...,0x456...`, and receives `reqid` in response
-3. router project queries `zk/get/{reqid}` to get proof data. Claimer then sends onchain tx to `claimWithZkProof`
-
+# Claim Process: Brevis ZK Proof
+Router projects can also claim gas rebates using Brevis ZK proof in a trust-free manner. High level flow is similar to signature-based above except that a ZK proof is returned from Brevis backend and sent to onchain contract by the claimer.
+1. Brevis system recognizes claimer address from router contract's `rebateClaimer`
+2. Provide the chainId and transaction list to Brevis backend `xxxx(tbd).brevis.network/zk/new` in the same format as signature-based flow, and receives `reqid` in response as generating ZK proof is async
+3. Query `xxxx(tbd).brevis.network/zk/get/{reqid}` to get ZK proof and data to submit onchain. See full response object definition [here](https://github.com/brevis-network/uniswap-rebate/blob/v4/proto/webapi.proto)
+4. Claimer sends onchain tx to the same RouterRebates contract's `claimWithZkProof` function
+```solidity
+function claimWithZkProof(
+    uint64 chainid, // swaps happened on this chainid, ie. 1 for eth mainnet
+    address recipient, // eth will be sent to this address
+    bytes calldata _proof,
+    bytes[] calldata _appCircuitOutputs,
+    bytes32[] calldata _proofIds,
+    IBrevisProof.ProofData[] calldata _proofDataArray
+)
 ```
-
-```
-
-```
-
-```
+   | Name        | Type             | Description                                                                                        | Notes                                                                                       |
+   | ----------- | ---------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+   | chainId     | uint64          | The chainId of the transaction hashes                                                              | The same chainId provided to the `GET /zk/new request`                                        |
+   | recipient   | address          | The recipient of the rebate                                                                        | The address should be able to safely recieve native Ether tokens                            |
+   | _proof   | bytes            | ZK proof received from Brevis backend                                                              |  Included in zk/get/ response object    |
+   | _appCircuitOutputs   | bytes[]            | ZK circuit output data                                                               |  Included in zk/get/ response object    |
+   | _proofIds   | bytes32[]            | IDs identifiying each ZK proof                                                             |  Included in zk/get/ response object    |
+   | _proofDataArray   | IBrevisProof.ProofData[]            | Data required by ZK verification                                                             |  Included in zk/get/ response object    |
