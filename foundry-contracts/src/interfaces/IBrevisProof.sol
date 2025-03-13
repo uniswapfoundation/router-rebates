@@ -5,10 +5,10 @@ pragma solidity ^0.8.26;
 interface IBrevisProof {
     struct ProofData {
         bytes32 commitHash;
-        bytes32 vkHash;
         bytes32 appCommitHash; // zk-program computing circuit commit hash
         bytes32 appVkHash; // zk-program computing circuit Verify Key hash
         bytes32 smtRoot;
+        bytes32 dummyInputCommitment; // zk-program computing circuit dummy input commitment
     }
 
     function submitProof(uint64 _chainId, bytes calldata _proofWithPubInputs)
