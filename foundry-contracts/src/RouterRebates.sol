@@ -108,16 +108,19 @@ contract RouterRebates is EIP712, Owned {
         IBrevisProof.ProofData[] calldata _proofDataArray
     ) external {
         uint256 amount = 0; // total eth
+        address beneficiary = address(bytes20(_appCircuitOutputs[0][0:20])); // router contract is first 20 bytes of app output
         if (_appCircuitOutputs.length == 1) {
             bytes calldata _appOutput = _appCircuitOutputs[0];
             // check proof
             (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
             require(appVkHash == vkHash, "mismatch vkhash");
             require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
-            amount = handleOutput(_appOutput);
+            amount = handleOutput(chainid, _appOutput);
             if (amount > 0) {
                 (bool sent,) = recipient.call{value: amount}("");
                 require(sent, "failed to send eth");
+
+                emit Claimed(msg.sender, beneficiary, recipient, amount);
             }
             return;
         }
@@ -129,17 +132,19 @@ contract RouterRebates is EIP712, Owned {
             require(_proofDataArray[i].appVkHash == vkHash, "mismatch vkhash");
             require(_proofDataArray[i].commitHash == _proofIds[i], "invalid proofId");
             require(_proofDataArray[i].appCommitHash == keccak256(_appCircuitOutputs[i]), "invalid circuit output");
-            amount += handleOutput(_appCircuitOutputs[i]);
+            amount += handleOutput(chainid, _appCircuitOutputs[i]);
         }
         if (amount > 0) {
             (bool sent,) = recipient.call{value: amount}("");
             require(sent, "failed to send eth");
+
+            emit Claimed(msg.sender, beneficiary, recipient, amount);
         }
     }
 
     // parse _appOutput, return total eth amount
     // one output has router(20), claimer(20), fromblk(8), toblk(8), eth amount(16)
-    function handleOutput(bytes calldata _appOutput) internal returns (uint256) {
+    function handleOutput(uint64 chainid, bytes calldata _appOutput) internal returns (uint256) {
         require(_appOutput.length == 72, "incorrect app output length");
         // router is msg.sender for Swap
         address router = address(bytes20(_appOutput[0:20]));
@@ -148,10 +153,8 @@ contract RouterRebates is EIP712, Owned {
         uint64 beginBlk = uint64(bytes8(_appOutput[40:48]));
         uint64 endBlk = uint64(bytes8(_appOutput[48:56]));
 
-        // TODO: fix
-        uint256 chainId = 1;
-        require(beginBlk > lastBlockClaimed[chainId][router], "begin blocknum too small");
-        lastBlockClaimed[chainId][router] = endBlk;
+        require(beginBlk > lastBlockClaimed[uint256(chainid)][router], "begin blocknum too small");
+        lastBlockClaimed[uint256(chainid)][router] = endBlk;
         return uint128(bytes16(_appOutput[56:72]));
     }
 
