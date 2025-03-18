@@ -87,7 +87,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
 
    |          | RouterRebates                                |
    | -------- | -------------------------------------------- |
-   | Sepolia  | `0x9231d72b6ad3cc298381bcc23ad9d807d51ea7ff` |
+   | Sepolia  | `0x6bec6dff20730840266a2434bcc4c3aa0b139482` |
    | Unichain | TBD                                          |
 
    ***
@@ -113,11 +113,14 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    | signature   | bytes            | A signature authorizing rebate claims                                                              | Returned by the `GET /sign request`. Internally derived from `abi.encodePacked(r, s, v)`    |
 
 # Claim Process: Brevis ZK Proof
+
 Router projects can also claim gas rebates using Brevis ZK proof in a trust-free manner. High level flow is similar to signature-based above except that a ZK proof is returned from Brevis backend and sent to onchain contract by the claimer.
+
 1. Brevis system recognizes claimer address from router contract's `rebateClaimer`
 2. Provide the chainId and transaction list to Brevis backend `xxxx(tbd).brevis.network/zk/new` in the same format as signature-based flow, and receives `reqid` in response as generating ZK proof is async
 3. Query `xxxx(tbd).brevis.network/zk/get/{reqid}` to get ZK proof and data to submit onchain. See full response object definition [here](https://github.com/brevis-network/uniswap-rebate/blob/v4/proto/webapi.proto)
 4. Claimer sends onchain tx to the same RouterRebates contract's `claimWithZkProof` function
+
 ```solidity
 function claimWithZkProof(
     uint64 chainid, // swaps happened on this chainid, ie. 1 for eth mainnet
@@ -128,11 +131,12 @@ function claimWithZkProof(
     IBrevisProof.ProofData[] calldata _proofDataArray
 )
 ```
-   | Name        | Type             | Description                                                                                        | Notes                                                                                       |
-   | ----------- | ---------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-   | chainId     | uint64          | The chainId of the transaction hashes                                                              | The same chainId provided to the `GET /zk/new request`                                        |
-   | recipient   | address          | The recipient of the rebate                                                                        | The address should be able to safely recieve native Ether tokens                            |
-   | _proof   | bytes            | ZK proof received from Brevis backend                                                              |  Included in zk/get/ response object    |
-   | _appCircuitOutputs   | bytes[]            | ZK circuit output data                                                               |  Included in zk/get/ response object    |
-   | _proofIds   | bytes32[]            | IDs identifiying each ZK proof                                                             |  Included in zk/get/ response object    |
-   | _proofDataArray   | IBrevisProof.ProofData[]            | Data required by ZK verification                                                             |  Included in zk/get/ response object    |
+
+| Name                | Type                     | Description                           | Notes                                                            |
+| ------------------- | ------------------------ | ------------------------------------- | ---------------------------------------------------------------- |
+| chainId             | uint64                   | The chainId of the transaction hashes | The same chainId provided to the `GET /zk/new request`           |
+| recipient           | address                  | The recipient of the rebate           | The address should be able to safely recieve native Ether tokens |
+| \_proof             | bytes                    | ZK proof received from Brevis backend | Included in zk/get/ response object                              |
+| \_appCircuitOutputs | bytes[]                  | ZK circuit output data                | Included in zk/get/ response object                              |
+| \_proofIds          | bytes32[]                | IDs identifiying each ZK proof        | Included in zk/get/ response object                              |
+| \_proofDataArray    | IBrevisProof.ProofData[] | Data required by ZK verification      | Included in zk/get/ response object                              |
