@@ -156,7 +156,7 @@ contract RouterRebatesTest is Test {
         );
     }
 
-    /// @dev Two valid signatures on block range [100, 151) and [150, 200) is valid
+    /// @dev Two valid signatures on block range [100, 150] and [151, 200] is valid
     function test_perfect_block_revert(address beneficiary, uint8 numHashes, uint256 seed, uint256 _amount) public {
         address recipient = address(1);
         vm.assume(recipient.code.length == 0);
@@ -164,7 +164,7 @@ contract RouterRebatesTest is Test {
         (bytes memory signature, uint256 chainId, uint128 startBlockNumber, uint128 endBlockNumber) =
             mockSigner(alicePK, address(this), beneficiary, transactionHashes, amount);
         assertEq(startBlockNumber, 100);
-        assertEq(endBlockNumber, 151);
+        assertEq(endBlockNumber, 150);
 
         uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
 
@@ -177,8 +177,8 @@ contract RouterRebatesTest is Test {
         vm.deal(address(rebates), amount);
 
         // a new valid signature with perfect block range
-        startBlockNumber = endBlockNumber - 1;
-        assertEq(startBlockNumber, 150);
+        startBlockNumber = endBlockNumber + 1;
+        assertEq(startBlockNumber, 151);
         endBlockNumber = 200;
         bytes32 digest =
             getDigest(address(this), beneficiary, chainId, transactionHashes, startBlockNumber, endBlockNumber, amount);
@@ -241,6 +241,43 @@ contract RouterRebatesTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
 
+        vm.expectRevert(InvalidBlockNumber.selector);
+        rebates.claimWithSignature(
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
+        );
+    }
+
+    /// @dev test that single block claims cannot be replayed
+    function test_revert_singleBlockReplay(
+        address beneficiary,
+        uint8 numHashes,
+        uint256 seed,
+        uint256 _amount,
+        uint128 startBlockNumber,
+        uint256 chainId
+    ) public {
+        address recipient = address(1);
+        vm.assume(startBlockNumber != 0);
+        (uint256 amount, bytes32[] memory transactionHashes) = fuzzHelper(_amount, numHashes, seed);
+
+        // generate a valid signature for a single block claim
+        uint128 endBlockNumber = startBlockNumber;
+        bytes32 digest =
+            getDigest(address(this), beneficiary, chainId, transactionHashes, startBlockNumber, endBlockNumber, amount);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePK, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // successfully claim on a single block
+        uint256 recipientBalanceBefore = CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient);
+        rebates.claimWithSignature(
+            chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
+        );
+        assertEq(CurrencyLibrary.ADDRESS_ZERO.balanceOf(recipient), recipientBalanceBefore + amount);
+
+        // top up the balance
+        vm.deal(address(rebates), amount);
+
+        // attempt a replay that will revert
         vm.expectRevert(InvalidBlockNumber.selector);
         rebates.claimWithSignature(
             chainId, beneficiary, recipient, amount, BlockNumberRange(startBlockNumber, endBlockNumber), signature
@@ -346,7 +383,7 @@ contract RouterRebatesTest is Test {
 
         // MOCK: backend to extract the first and last block number from transactionHashes
         startBlockNumber = 100;
-        endBlockNumber = 151; // end block number is exclusive; so user is claiming for blocks [100, 150]
+        endBlockNumber = 150; // end block number is INCLUSIVE; so user is claiming for blocks [100, 150]
 
         // MOCK: backend to verify that beneficiary has specified the claimer
         // require(claimer == IRebateClaimer(beneficiary).rebateClaimer(), "INVALID_CLAIMER");
