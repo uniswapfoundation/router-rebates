@@ -12,8 +12,11 @@ export async function batch(
   startBlockNumber: string;
   endBlockNumber: string;
 }> {
+  // deduplicate the txnHashes
+  const uniqueTxnHashes = Array.from(new Set(txnHashes));
+
   const result = await Promise.all(
-    txnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
+    uniqueTxnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
   );
 
   const amount = result.reduce(
