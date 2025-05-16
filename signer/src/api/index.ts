@@ -26,7 +26,10 @@ app.get("/sign", async (c) => {
   }
 
   const publicClient = getClient(Number(chainId));
-  const txnHashList = txnHashes.split(",") as `0x${string}`[];
+  let txnHashList = txnHashes.split(",") as `0x${string}`[];
+
+  // deduplicate txn hashes
+  txnHashList = [...new Set(txnHashList)];
 
   const result = await batch(publicClient, txnHashList);
 
