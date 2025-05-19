@@ -1,6 +1,7 @@
-import type { Address, PublicClient } from "viem";
+import { zeroAddress, type Address, type PublicClient } from "viem";
 import { calculateRebate } from "./rebate";
 import { getRebateClaimer, sign } from "./signer";
+import { MINIMUM_BLOCK_HEIGHT } from "../../constants";
 
 export async function batch(
   publicClient: PublicClient,
@@ -12,9 +13,21 @@ export async function batch(
   startBlockNumber: string;
   endBlockNumber: string;
 }> {
-  const result = await Promise.all(
-    txnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
+  const currentBlockNumber = await publicClient.getBlockNumber();
+  const chainId = await publicClient.getChainId();
+  let result = await Promise.all(
+    txnHashes.map((txnHash) =>
+      calculateRebate(
+        publicClient,
+        currentBlockNumber,
+        MINIMUM_BLOCK_HEIGHT[chainId as keyof typeof MINIMUM_BLOCK_HEIGHT],
+        txnHash
+      )
+    )
   );
+
+  // filter out any invalid transactions, where beneficiary is zero address
+  result = result.filter((data) => data.beneficiary !== zeroAddress);
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,
@@ -34,7 +47,7 @@ export async function batch(
   const signature = await sign(
     claimer,
     beneficiary,
-    BigInt(await publicClient.getChainId()),
+    BigInt(chainId),
     startBlockNumber,
     endBlockNumber,
     amount
