@@ -14,11 +14,10 @@ export async function batch(
   endBlockNumber: string;
 }> {
   let result = await Promise.all(
-    txnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
+    txnHashes.map((txnHash) =>
+      calculateRebate(publicClient, txnHash, beneficiary)
+    )
   );
-
-  // filter out any rebates that do not correlate to the beneficiary
-  result = result.filter((data) => data.beneficiary === beneficiary);
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,

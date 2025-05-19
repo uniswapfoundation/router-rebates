@@ -22,7 +22,8 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 /// @dev rebates are only calculated for the first swap router
 export async function calculateRebate(
   client: PublicClient,
-  txnHash: `0x${string}`
+  txnHash: `0x${string}`,
+  beneficiary: Address
 ): Promise<{
   beneficiary: Address;
   gasToRebate: bigint;
@@ -42,7 +43,9 @@ export async function calculateRebate(
   const swapEvents = parseEventLogs({
     abi: abi,
     logs: txnReceipt.logs,
-  }).filter((log) => log.eventName === "Swap");
+  }).filter(
+    (log) => log.eventName === "Swap" && log.args.sender === beneficiary
+  );
 
   if (swapEvents.length === 0) {
     return {
@@ -52,12 +55,6 @@ export async function calculateRebate(
       blockNumber: 0n,
     };
   }
-
-  const beneficiary: Address = swapEvents[0].args.sender;
-
-  // note: within a transaction hash there may be multiple swap routers
-  // this is different than signing for a batch of transaction hashes
-  // TODO: require all events are from the same sender
 
   // iterate each swap event, calculating the rebate for the sender (swap router)
   const rebates = await Promise.all(
