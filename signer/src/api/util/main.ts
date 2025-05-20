@@ -14,8 +14,12 @@ export async function batch(
 }> {
   const { rebatePerSwap, rebatePerHook, rebateFixed } =
     await getRebatePerEvent();
+
+  // deduplicate the txnHashes
+  const uniqueTxnHashes = Array.from(new Set(txnHashes.map((hash) => hash.toLowerCase() as `0x${string}`)));
+
   const result = await Promise.all(
-    txnHashes.map((txnHash) =>
+    uniqueTxnHashes.map((txnHash) =>
       calculateRebate(
         publicClient,
         txnHash,
