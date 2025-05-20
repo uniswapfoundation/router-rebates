@@ -113,8 +113,11 @@ contract RouterRebates is EIP712, Owned {
             bytes calldata _appOutput = _appCircuitOutputs[0];
             // check proof
             (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
-            require(appVkHash == vkHash, "mismatch vkhash");
+
+            require(vkHash != bytes32(0), "vkHash not set");
+            require(appVkHash == vkHash, "mismatch vkHash");
             require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
+
             amount = handleOutput(chainid, _appOutput);
             if (amount > 0) {
                 (bool sent,) = recipient.call{value: amount}("");
@@ -160,5 +163,6 @@ contract RouterRebates is EIP712, Owned {
 
     // accept eth transfer
     receive() external payable {}
+
     fallback() external payable {}
 }
