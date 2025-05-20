@@ -1,5 +1,5 @@
-import type { Address, PublicClient } from "viem";
-import { calculateRebate } from "./rebate";
+import { zeroAddress, type Address, type PublicClient } from "viem";
+import { calculateRebate, getRebatePerEvent } from "./rebate";
 import { getRebateClaimer, sign } from "./signer";
 
 export async function batch(
@@ -12,17 +12,41 @@ export async function batch(
   startBlockNumber: string;
   endBlockNumber: string;
 }> {
+  const { rebatePerSwap, rebatePerHook, rebateFixed } =
+    await getRebatePerEvent();
+
   // deduplicate the txnHashes
   const uniqueTxnHashes = Array.from(new Set(txnHashes));
 
   const result = await Promise.all(
-    uniqueTxnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
+    uniqueTxnHashes.map((txnHash) =>
+      calculateRebate(
+        publicClient,
+        txnHash,
+        rebatePerSwap,
+        rebatePerHook,
+        rebateFixed
+      )
+    )
   );
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,
     0n
   );
+
+  // no rebates were found from the transaction hashes provided
+  // early-return to avoid `getRebateClaimer` call and signature generation
+  if (amount === 0n) {
+    return {
+      claimer: zeroAddress,
+      signature: "0x0",
+      amount: "0",
+      startBlockNumber: "0",
+      endBlockNumber: "0",
+    };
+  }
+
   const beneficiary: `0x${string}` = result[0].beneficiary;
   const claimer = await getRebateClaimer(publicClient, beneficiary);
   const startBlockNumber = result.reduce(

@@ -1,5 +1,6 @@
 import { privateKeyToAccount } from "viem/accounts";
 import { getAddress, parseAbiItem, type PublicClient } from "viem";
+import { zeroAddress } from "viem";
 
 const types = {
   Claimable: [
@@ -51,9 +52,13 @@ export async function getRebateClaimer(
   publicClient: PublicClient,
   beneficiary: `0x${string}`
 ): Promise<`0x${string}`> {
-  return await publicClient.readContract({
-    address: beneficiary,
-    abi: [parseAbiItem("function rebateClaimer() view returns (address)")],
-    functionName: "rebateClaimer",
-  });
+  try {
+    return await publicClient.readContract({
+      address: beneficiary,
+      abi: [parseAbiItem("function rebateClaimer() view returns (address)")],
+      functionName: "rebateClaimer",
+    });
+  } catch {
+    return zeroAddress;
+  }
 }
