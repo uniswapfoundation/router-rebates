@@ -28,6 +28,8 @@ contract RouterRebates is EIP712, Owned {
     error EmptyHashes();
 
     event Claimed(address claimer, address beneficiary, address recipient, uint256 amount);
+    event SignerSet(address signer);
+    event ZkConfigSet(address brvProof, bytes32 vkHash);
 
     // (n * rebatePerSwap) + rebateFixed
     uint256 public rebatePerSwap = 80_000; // gas units to rebate per swap event
@@ -92,11 +94,13 @@ contract RouterRebates is EIP712, Owned {
     function setSigner(address _signer) external onlyOwner {
         require(signer != address(0));
         signer = _signer;
+        emit SignerSet(_signer);
     }
 
     function setZkConfig(IBrevisProof _brvproof, bytes32 _vkHash) external onlyOwner {
         brvProof = _brvproof;
         vkHash = _vkHash;
+        emit ZkConfigSet(address(_brvproof), _vkHash);
     }
 
     function claimWithZkProof(
