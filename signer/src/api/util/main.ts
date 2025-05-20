@@ -16,7 +16,7 @@ export async function batch(
     await getRebatePerEvent();
 
   // deduplicate the txnHashes
-  const uniqueTxnHashes = Array.from(new Set(txnHashes));
+  const uniqueTxnHashes = Array.from(new Set(txnHashes.map((hash) => hash.toLowerCase() as `0x${string}`)));
 
   const result = await Promise.all(
     uniqueTxnHashes.map((txnHash) =>
