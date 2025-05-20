@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {Owned} from "solmate/src/auth/Owned.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
 import {EIP712} from "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 
-import {IRebateClaimer} from "./base/IRebateClaimer.sol";
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
 import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 import {IBrevisProof} from "./interfaces/IBrevisProof.sol";
@@ -28,6 +26,8 @@ contract RouterRebates is EIP712, Owned {
     error EmptyHashes();
 
     event Claimed(address claimer, address beneficiary, address recipient, uint256 amount);
+    event SignerSet(address signer);
+    event ZkConfigSet(address brvProof, bytes32 vkHash);
 
     // (n * rebatePerSwap) + rebateFixed
     uint256 public rebatePerSwap = 80_000; // gas units to rebate per swap event
@@ -90,13 +90,15 @@ contract RouterRebates is EIP712, Owned {
     }
 
     function setSigner(address _signer) external onlyOwner {
-        require(signer != address(0));
+        require(_signer != address(0), "invalid signer");
         signer = _signer;
+        emit SignerSet(_signer);
     }
 
     function setZkConfig(IBrevisProof _brvproof, bytes32 _vkHash) external onlyOwner {
         brvProof = _brvproof;
         vkHash = _vkHash;
+        emit ZkConfigSet(address(_brvproof), _vkHash);
     }
 
     function claimWithZkProof(
@@ -113,8 +115,11 @@ contract RouterRebates is EIP712, Owned {
             bytes calldata _appOutput = _appCircuitOutputs[0];
             // check proof
             (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
-            require(appVkHash == vkHash, "mismatch vkhash");
+
+            require(vkHash != bytes32(0), "vkHash not set");
+            require(appVkHash == vkHash, "mismatch vkHash");
             require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
+
             amount = handleOutput(chainid, _appOutput);
             if (amount > 0) {
                 (bool sent,) = recipient.call{value: amount}("");
@@ -160,5 +165,6 @@ contract RouterRebates is EIP712, Owned {
 
     // accept eth transfer
     receive() external payable {}
+
     fallback() external payable {}
 }
