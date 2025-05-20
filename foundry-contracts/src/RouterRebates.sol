@@ -60,7 +60,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
     ) external nonReentrant {
         // startBlockNumber must be less than endBlockNumber
         if (blockRange.startBlockNumber > blockRange.endBlockNumber) revert InvalidBlockNumber();
-        if (blockRange.startBlockNumber < lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
+        if (blockRange.startBlockNumber <= lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
 
         // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest = ClaimableHash.hashClaimable(
@@ -69,7 +69,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         signature.verify(_hashTypedDataV4(digest), signer);
 
         // consume the block number to prevent replaying claims
-        lastBlockClaimed[chainId][beneficiary] = blockRange.endBlockNumber - 1;
+        lastBlockClaimed[chainId][beneficiary] = blockRange.endBlockNumber;
 
         // send amount to recipient
         CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
