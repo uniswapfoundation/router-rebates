@@ -6,7 +6,6 @@
  * - [__View Contract on Ethereum Etherscan__](https://etherscan.io/address/0x000000000004444c5dc75cb358380d2e3de08a90)
  * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x9a13f98cb987694c9f086b1f5eb990eea8264ec3)
  * - [__View Contract on Unichain Uniscan__](https://uniscan.xyz/address/0x1f98400000000000000000000000000000000004)
- * - [__View Contract on Polygon Polygon Scan__](https://polygonscan.com/address/0x67366782805870060151383f4bbff9dab53e5cd6)
  * - [__View Contract on World Chain Worldscan__](https://worldscan.org/address/0xb1860d529182ac3bc1f51fa2abd56662b7d13f33)
  * - [__View Contract on Unichain Sepolia Uniscan__](https://sepolia.uniscan.xyz/address/0x00B036B58a818B1BC34d502D3fE730Db729e62AC)
  * - [__View Contract on Base Basescan__](https://basescan.org/address/0x498581ff718922c3f8e6a244956af099b2652b2b)
@@ -714,7 +713,6 @@ export const poolManagerAbi = [
  * - [__View Contract on Ethereum Etherscan__](https://etherscan.io/address/0x000000000004444c5dc75cb358380d2e3de08a90)
  * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x9a13f98cb987694c9f086b1f5eb990eea8264ec3)
  * - [__View Contract on Unichain Uniscan__](https://uniscan.xyz/address/0x1f98400000000000000000000000000000000004)
- * - [__View Contract on Polygon Polygon Scan__](https://polygonscan.com/address/0x67366782805870060151383f4bbff9dab53e5cd6)
  * - [__View Contract on World Chain Worldscan__](https://worldscan.org/address/0xb1860d529182ac3bc1f51fa2abd56662b7d13f33)
  * - [__View Contract on Unichain Sepolia Uniscan__](https://sepolia.uniscan.xyz/address/0x00B036B58a818B1BC34d502D3fE730Db729e62AC)
  * - [__View Contract on Base Basescan__](https://basescan.org/address/0x498581ff718922c3f8e6a244956af099b2652b2b)
@@ -728,7 +726,6 @@ export const poolManagerAddress = {
   1: '0x000000000004444c5dc75cB358380D2e3dE08A90',
   10: '0x9a13F98Cb987694C9F086b1F5eB990EeA8264Ec3',
   130: '0x1F98400000000000000000000000000000000004',
-  137: '0x67366782805870060151383F4BbFF9daB53e5cD6',
   480: '0xb1860D529182ac3BC1F51Fa2ABd56662b7D13f33',
   1301: '0x00B036B58a818B1BC34d502D3fE730Db729e62AC',
   8453: '0x498581fF718922c3f8e6A244956aF099B2652b2b',
@@ -743,7 +740,6 @@ export const poolManagerAddress = {
  * - [__View Contract on Ethereum Etherscan__](https://etherscan.io/address/0x000000000004444c5dc75cb358380d2e3de08a90)
  * - [__View Contract on Op Mainnet Optimism Explorer__](https://optimistic.etherscan.io/address/0x9a13f98cb987694c9f086b1f5eb990eea8264ec3)
  * - [__View Contract on Unichain Uniscan__](https://uniscan.xyz/address/0x1f98400000000000000000000000000000000004)
- * - [__View Contract on Polygon Polygon Scan__](https://polygonscan.com/address/0x67366782805870060151383f4bbff9dab53e5cd6)
  * - [__View Contract on World Chain Worldscan__](https://worldscan.org/address/0xb1860d529182ac3bc1f51fa2abd56662b7d13f33)
  * - [__View Contract on Unichain Sepolia Uniscan__](https://sepolia.uniscan.xyz/address/0x00B036B58a818B1BC34d502D3fE730Db729e62AC)
  * - [__View Contract on Base Basescan__](https://basescan.org/address/0x498581ff718922c3f8e6a244956af099b2652b2b)

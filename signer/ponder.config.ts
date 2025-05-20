@@ -32,11 +32,6 @@ export default createConfig({
       transport: http(process.env.PONDER_RPC_URL_8453),
       maxRequestsPerSecond: process.env.PONDER_RPC_URL_8453 !== "" ? 15 : 5,
     },
-    polygon: {
-      chainId: 137,
-      transport: http(process.env.PONDER_RPC_URL_137),
-      maxRequestsPerSecond: process.env.PONDER_RPC_URL_137 !== "" ? 15 : 5,
-    },
     worldchain: {
       chainId: 480,
       transport: http(process.env.PONDER_RPC_URL_480),
@@ -96,10 +91,6 @@ export default createConfig({
         base: {
           address: poolManagerAddress[8453],
           startBlock: process.env.NODE_ENV === "dev" ? "latest" : 25350988,
-        },
-        polygon: {
-          address: poolManagerAddress[137],
-          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 66980384,
         },
         worldchain: {
           address: poolManagerAddress[480],
