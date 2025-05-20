@@ -10,6 +10,7 @@ import {
 import { getClient } from "./chain";
 import schema from "ponder:schema";
 import { db as dbClient } from "ponder:api";
+import { poolManagerAddress } from "../../generated";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -23,7 +24,10 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 export async function calculateRebate(
   client: PublicClient,
   txnHash: `0x${string}`,
-  beneficiary: Address
+  beneficiary: Address,
+  rebatePerSwap: bigint,
+  rebatePerHook: bigint,
+  rebateFixed: bigint
 ): Promise<{
   beneficiary: Address;
   gasToRebate: bigint;
@@ -31,8 +35,6 @@ export async function calculateRebate(
   blockNumber: bigint;
 }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
-  const { rebatePerSwap, rebatePerHook, rebateFixed } =
-    await getRebatePerEvent();
 
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
@@ -44,7 +46,11 @@ export async function calculateRebate(
     abi: abi,
     logs: txnReceipt.logs,
   }).filter(
-    (log) => log.eventName === "Swap" && log.args.sender === beneficiary
+    (log) =>
+      log.eventName === "Swap" &&
+      log.address ===
+        poolManagerAddress[client.chain!.id as keyof typeof poolManagerAddress] &&
+      log.args.sender === beneficiary
   );
 
   if (swapEvents.length === 0) {
@@ -59,7 +65,10 @@ export async function calculateRebate(
   // iterate each swap event, calculating the rebate for the sender (swap router)
   const rebates = await Promise.all(
     swapEvents.map(async (swapEvent) => {
-      const { id } = swapEvent.args;
+      const { id } = swapEvent.args; // poolId from the swap event
+
+      // NOTE: the database is indexing across multiple chains, so it may fetch duplicates (same poolId, hook address, currencies, etc)
+      // the database is used to associate a poolId with a hook address, so duplicates are deemed safe
       const result = await dbClient
         .select({ hooks: schema.pool.hooks })
         .from(schema.pool)
@@ -88,7 +97,7 @@ export async function calculateRebate(
   };
 }
 
-async function getRebatePerEvent(): Promise<{
+export async function getRebatePerEvent(): Promise<{
   rebatePerSwap: bigint;
   rebatePerHook: bigint;
   rebateFixed: bigint;
