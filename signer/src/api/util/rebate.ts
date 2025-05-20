@@ -69,7 +69,10 @@ export async function calculateRebate(
   // iterate each swap event, calculating the rebate for the sender (swap router)
   const rebates = await Promise.all(
     swapEvents.map(async (swapEvent) => {
-      const { id } = swapEvent.args;
+      const { id } = swapEvent.args; // poolId from the swap event
+
+      // NOTE: the database is indexing across multiple chains, so it may fetch duplicates (same poolId, hook address, currencies, etc)
+      // the database is used to associate a poolId with a hook address, so duplicates are deemed safe
       const result = await dbClient
         .select({ hooks: schema.pool.hooks })
         .from(schema.pool)
