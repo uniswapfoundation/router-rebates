@@ -25,12 +25,17 @@ app.get("/sign", async (c) => {
     );
   }
 
-  const publicClient = getClient(Number(chainId));
-  const txnHashList = txnHashes.split(",") as `0x${string}`[];
+  try {
+    const publicClient = getClient(Number(chainId));
+    const txnHashList = txnHashes.split(",") as `0x${string}`[];
 
-  const result = await batch(publicClient, txnHashList);
+    const result = await batch(publicClient, txnHashList);
 
-  return c.json(result);
+    return c.json(result);
+  } catch (e) {
+    console.error(e);
+    return c.text("Something went wrong");
+  }
 });
 
 export default app;
