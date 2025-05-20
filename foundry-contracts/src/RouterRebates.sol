@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Owned} from "solmate/src/auth/Owned.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
 import {EIP712} from "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
 import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
@@ -14,7 +15,7 @@ struct BlockNumberRange {
     uint128 endBlockNumber;
 }
 
-contract RouterRebates is EIP712, Owned {
+contract RouterRebates is ReentrancyGuard, EIP712, Owned {
     using SignatureVerification for bytes;
 
     error InvalidAmount();
@@ -56,7 +57,7 @@ contract RouterRebates is EIP712, Owned {
         uint256 amount,
         BlockNumberRange calldata blockRange,
         bytes calldata signature
-    ) external {
+    ) external nonReentrant {
         // startBlockNumber must be less than endBlockNumber
         if (blockRange.startBlockNumber > blockRange.endBlockNumber) revert InvalidBlockNumber();
         if (blockRange.startBlockNumber < lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
@@ -108,7 +109,7 @@ contract RouterRebates is EIP712, Owned {
         bytes[] calldata _appCircuitOutputs,
         bytes32[] calldata _proofIds,
         IBrevisProof.ProofData[] calldata _proofDataArray
-    ) external {
+    ) external nonReentrant {
         uint256 amount = 0; // total eth
         address beneficiary = address(bytes20(_appCircuitOutputs[0][0:20])); // router contract is first 20 bytes of app output
         if (_appCircuitOutputs.length == 1) {
