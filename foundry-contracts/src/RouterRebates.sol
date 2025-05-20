@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {Owned} from "solmate/src/auth/Owned.sol";
 import {SignatureVerification} from "permit2/src/libraries/SignatureVerification.sol";
 import {EIP712} from "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 
-import {IRebateClaimer} from "./base/IRebateClaimer.sol";
 import {ClaimableHash} from "./libraries/ClaimableHash.sol";
 import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 import {IBrevisProof} from "./interfaces/IBrevisProof.sol";
@@ -90,7 +88,7 @@ contract RouterRebates is EIP712, Owned {
     }
 
     function setSigner(address _signer) external onlyOwner {
-        require(signer != address(0));
+        require(_signer != address(0), "invalid signer");
         signer = _signer;
     }
 
