@@ -1,5 +1,5 @@
 import { zeroAddress, type Address, type PublicClient } from "viem";
-import { calculateRebate } from "./rebate";
+import { calculateRebate, getRebatePerEvent } from "./rebate";
 import { getRebateClaimer, sign } from "./signer";
 
 export async function batch(
@@ -12,8 +12,18 @@ export async function batch(
   startBlockNumber: string;
   endBlockNumber: string;
 }> {
+  const { rebatePerSwap, rebatePerHook, rebateFixed } =
+    await getRebatePerEvent();
   const result = await Promise.all(
-    txnHashes.map((txnHash) => calculateRebate(publicClient, txnHash))
+    txnHashes.map((txnHash) =>
+      calculateRebate(
+        publicClient,
+        txnHash,
+        rebatePerSwap,
+        rebatePerHook,
+        rebateFixed
+      )
+    )
   );
 
   const amount = result.reduce(
