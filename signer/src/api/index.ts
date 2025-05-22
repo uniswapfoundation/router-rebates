@@ -37,11 +37,18 @@ app.get("/sign", async (c) => {
     );
   }
 
+  const beneficiary = c.req.query("beneficiary");
+  if (beneficiary === undefined) {
+    return c.text(
+      "provide beneficiary as query parameter, the address of the contract (in the Swap event): &beneficiary=0x123"
+    );
+  }
+
   try {
     const publicClient = getClient(Number(chainId));
     const txnHashList = txnHashes.split(",") as `0x${string}`[];
 
-    const result = await batch(publicClient, txnHashList);
+    const result = await batch(publicClient, txnHashList, beneficiary as `0x${string}`);
 
     return c.json(result);
   } catch (e) {

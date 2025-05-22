@@ -4,7 +4,8 @@ import { getRebateClaimer, sign } from "./signer";
 
 export async function batch(
   publicClient: PublicClient,
-  txnHashes: `0x${string}`[]
+  txnHashes: `0x${string}`[],
+  beneficiary: Address
 ): Promise<{
   claimer: Address;
   signature: `0x${string}`;
@@ -23,6 +24,7 @@ export async function batch(
       calculateRebate(
         publicClient,
         txnHash,
+        beneficiary,
         rebatePerSwap,
         rebatePerHook,
         rebateFixed
@@ -47,15 +49,14 @@ export async function batch(
     };
   }
 
-  const beneficiary: `0x${string}` = result[0].beneficiary;
   const claimer = await getRebateClaimer(publicClient, beneficiary);
   const startBlockNumber = result.reduce(
     (min: bigint, data) => (data.blockNumber < min ? data.blockNumber : min),
-    result[0].blockNumber
+    BigInt(Number.MAX_SAFE_INTEGER)
   );
   const endBlockNumber = result.reduce(
     (max: bigint, data) => (data.blockNumber > max ? data.blockNumber : max),
-    result[0].blockNumber
+    0n
   );
 
   const signature = await sign(

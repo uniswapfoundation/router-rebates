@@ -62,12 +62,13 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    txnHashList = ["0xABC", "0xDEF"]
    ```
 
-2. Provide the chainId and transaction list to the API
+2. Provide the chainId, transaction list, and the beneficiary address (swap router) to the API
 
    ```bash
    curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
      --data-urlencode 'chainId=1' \
      --data-urlencode 'txnHashes=0xABC,0xDEF'
+     --data-urlencode 'beneficiary=0xA1B2C3
    ```
 
 3. Example response:
