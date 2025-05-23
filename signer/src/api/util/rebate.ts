@@ -11,6 +11,7 @@ import { getClient } from "./chain";
 import schema from "ponder:schema";
 import { db as dbClient } from "ponder:api";
 import { poolManagerAddress } from "../../generated";
+import { MINIMUM_BLOCK_HEIGHT, MINIMUM_ELIGIBLE_BLOCK_NUMBER } from "../../constants";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -24,7 +25,7 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 export async function calculateRebate(
   client: PublicClient,
   currentBlockNumber: bigint,
-  minimumBlockHeight: bigint,
+  chainId: number,
   txnHash: `0x${string}`,
   beneficiary: Address,
   rebatePerSwap: bigint,
@@ -38,8 +39,9 @@ export async function calculateRebate(
 }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
 
-  // do not rebate if the transaction is recent
-  if (currentBlockNumber < txnReceipt.blockNumber + minimumBlockHeight) {
+  // do not rebate if the transaction is too old or too recent
+  if ((currentBlockNumber < txnReceipt.blockNumber + MINIMUM_BLOCK_HEIGHT[chainId as keyof typeof MINIMUM_BLOCK_HEIGHT])
+    || (txnReceipt.blockNumber < MINIMUM_ELIGIBLE_BLOCK_NUMBER[chainId as keyof typeof MINIMUM_ELIGIBLE_BLOCK_NUMBER])) {
     return {
       beneficiary: zeroAddress,
       gasToRebate: 0n,

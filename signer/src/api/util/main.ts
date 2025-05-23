@@ -27,7 +27,7 @@ export async function batch(
       calculateRebate(
         publicClient,
         currentBlockNumber,
-        MINIMUM_BLOCK_HEIGHT[chainId as keyof typeof MINIMUM_BLOCK_HEIGHT],
+        chainId,
         txnHash,
         beneficiary,
         rebatePerSwap,
