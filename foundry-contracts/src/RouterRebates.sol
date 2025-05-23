@@ -102,6 +102,13 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         emit ZkConfigSet(address(_brvproof), _vkHash);
     }
 
+    // Escape hatch function to withdraw ETH from the contract
+    function withdrawETH(address _recipient) external onlyOwner {
+        (bool success,) = _recipient.call{value: address(this).balance}("");
+
+        require(success, "transfer failed");
+    }
+
     function claimWithZkProof(
         uint64 chainid, // swaps happened on this chainid, ie. 1 for eth mainnet
         address recipient, // eth will be sent to this address
