@@ -27,12 +27,10 @@ contract RouterRebatesTest is Test {
     error InvalidAmount();
 
     function setUp() public {
-        rebates = new RouterRebates("REBATES", address(this));
-
         (alice, alicePK) = makeAddrAndKey("ALICE");
         (bob, bobPK) = makeAddrAndKey("BOB");
 
-        rebates.setSigner(alice);
+        rebates = new RouterRebates("REBATES", address(this), alice);
 
         // deposit and fund the campaign
         vm.deal(address(rebates), 10 ether);

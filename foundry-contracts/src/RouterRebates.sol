@@ -46,8 +46,8 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
     uint256 constant MAX_REBATE_PER_HOOK = 80_000;
     uint256 constant MAX_REBATE_FIXED = 120_000;
 
-    constructor(string memory _name, address _owner) EIP712(_name, "1") Owned(_owner) {
-        signer = _owner;
+    constructor(string memory _name, address _owner, address _signer) EIP712(_name, "1") Owned(_owner) {
+        signer = _signer;
     }
 
     function claimWithSignature(
