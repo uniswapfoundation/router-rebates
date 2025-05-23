@@ -17,7 +17,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.ETHEREUM_LOCAL_RPC_URL
-          : process.env.ETHEREUM_RPC_URL
+          : process.env.ETHEREUM_RPC_URL,
       ),
     });
   } else if (chainId === 8453) {
@@ -27,7 +27,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.BASE_LOCAL_RPC_URL
-          : process.env.BASE_RPC_URL
+          : process.env.BASE_RPC_URL,
       ),
     });
   } else if (chainId === 42161) {
@@ -37,7 +37,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.ARBITRUM_LOCAL_RPC_URL
-          : process.env.ARBITRUM_RPC_URL
+          : process.env.ARBITRUM_RPC_URL,
       ),
     });
   } else if (chainId === 130) {
@@ -47,7 +47,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.UNICHAIN_LOCAL_RPC_URL
-          : process.env.UNICHAIN_RPC_URL
+          : process.env.UNICHAIN_RPC_URL,
       ),
     });
   } else if (chainId === 11155111) {
@@ -57,7 +57,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.ETHEREUM_SEPOLIA_LOCAL_RPC_URL
-          : process.env.ETHEREUM_SEPOLIA_RPC_URL
+          : process.env.ETHEREUM_SEPOLIA_RPC_URL,
       ),
     });
   } else if (chainId === 84532) {
@@ -67,7 +67,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.BASE_SEPOLIA_LOCAL_RPC_URL
-          : process.env.BASE_SEPOLIA_RPC_URL
+          : process.env.BASE_SEPOLIA_RPC_URL,
       ),
     });
   } else if (chainId === 421614) {
@@ -77,7 +77,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.ARBITRUM_SEPOLIA_LOCAL_RPC_URL
-          : process.env.ARBITRUM_SEPOLIA_RPC_URL
+          : process.env.ARBITRUM_SEPOLIA_RPC_URL,
       ),
     });
   } else if (chainId === 1301) {
@@ -87,7 +87,7 @@ export function getClient(chainId: number): PublicClient {
       transport: http(
         envMode === "dev"
           ? process.env.UNICHAIN_SEPOLIA_LOCAL_RPC_URL
-          : process.env.UNICHAIN_SEPOLIA_RPC_URL
+          : process.env.UNICHAIN_SEPOLIA_RPC_URL,
       ),
     });
   } else if (chainId === 31337) {

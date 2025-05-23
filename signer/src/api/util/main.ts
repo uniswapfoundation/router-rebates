@@ -6,7 +6,7 @@ import { MINIMUM_BLOCK_HEIGHT } from "../../constants";
 export async function batch(
   publicClient: PublicClient,
   txnHashes: `0x${string}`[],
-  beneficiary: Address
+  beneficiary: Address,
 ): Promise<{
   claimer: Address;
   signature: `0x${string}`;
@@ -20,7 +20,9 @@ export async function batch(
     await getRebatePerEvent();
 
   // deduplicate the txnHashes
-  const uniqueTxnHashes = Array.from(new Set(txnHashes.map((hash) => hash.toLowerCase() as `0x${string}`)));
+  const uniqueTxnHashes = Array.from(
+    new Set(txnHashes.map((hash) => hash.toLowerCase() as `0x${string}`)),
+  );
 
   let result = await Promise.all(
     uniqueTxnHashes.map((txnHash) =>
@@ -32,9 +34,9 @@ export async function batch(
         beneficiary,
         rebatePerSwap,
         rebatePerHook,
-        rebateFixed
-      )
-    )
+        rebateFixed,
+      ),
+    ),
   );
 
   // filter out any invalid transactions, where beneficiary is zero address
@@ -42,7 +44,7 @@ export async function batch(
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,
-    0n
+    0n,
   );
 
   // no rebates were found from the transaction hashes provided
@@ -60,11 +62,11 @@ export async function batch(
   const claimer = await getRebateClaimer(publicClient, beneficiary);
   const startBlockNumber = result.reduce(
     (min: bigint, data) => (data.blockNumber < min ? data.blockNumber : min),
-    BigInt(Number.MAX_SAFE_INTEGER)
+    BigInt(Number.MAX_SAFE_INTEGER),
   );
   const endBlockNumber = result.reduce(
     (max: bigint, data) => (data.blockNumber > max ? data.blockNumber : max),
-    0n
+    0n,
   );
 
   const signature = await sign(
@@ -73,7 +75,7 @@ export async function batch(
     BigInt(chainId),
     startBlockNumber,
     endBlockNumber,
-    amount
+    amount,
   );
 
   return {

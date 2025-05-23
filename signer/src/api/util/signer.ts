@@ -19,10 +19,10 @@ export async function sign(
   chainId: bigint,
   startBlockNumber: bigint,
   endBlockNumber: bigint,
-  amount: bigint
+  amount: bigint,
 ): Promise<`0x${string}`> {
   const account = privateKeyToAccount(
-    process.env.ETH_SIGNER_PRIVATE_KEY as `0x${string}`
+    process.env.ETH_SIGNER_PRIVATE_KEY as `0x${string}`,
   );
 
   const signature = await account.signTypedData({
@@ -31,7 +31,7 @@ export async function sign(
       version: process.env.REBATE_CONTRACT_VERSION,
       chainId: Number(process.env.REBATE_CHAIN_ID),
       verifyingContract: getAddress(
-        process.env.REBATE_ADDRESS as `0x${string}`
+        process.env.REBATE_ADDRESS as `0x${string}`,
       ),
     },
     types: types,
@@ -50,7 +50,7 @@ export async function sign(
 
 export async function getRebateClaimer(
   publicClient: PublicClient,
-  beneficiary: `0x${string}`
+  beneficiary: `0x${string}`,
 ): Promise<`0x${string}`> {
   try {
     return await publicClient.readContract({

@@ -8,7 +8,8 @@
     "start": "ponder start",
     "db": "ponder db",
     "codegen": "ponder codegen",
-    "lint": "eslint .",
+    "lint": "prettier --check 'src/**/*.{ts,js,json,md}'",
+    "lint:fix": "prettier --write 'src/**/*.{ts,js,json,md}'",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -27,6 +28,7 @@
     "babel-jest": "^29.7.0",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.9.7",
+    "prettier": "^3.5.3",
     "ts-jest": "^29.2.5",
     "typescript": "^5.2.2"
   },

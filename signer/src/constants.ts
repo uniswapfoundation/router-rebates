@@ -1,4 +1,11 @@
-import { arbitrum, base, mainnet, optimism, sepolia, unichain } from "viem/chains";
+import {
+  arbitrum,
+  base,
+  mainnet,
+  optimism,
+  sepolia,
+  unichain,
+} from "viem/chains";
 
 export const MINIMUM_ELIGIBLE_BLOCK_NUMBER = {
   [mainnet.id]: 22547174,
