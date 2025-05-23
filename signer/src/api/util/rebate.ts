@@ -15,7 +15,11 @@ import {
   MINIMUM_ELIGIBLE_BLOCK_NUMBER
 } from "../../constants";
 
-/// @dev rebates are only calculated for the first swap router
+/// @dev A transaction is eligible for a rebate if:
+/// - the transaction is not older than the minimum eligible block
+/// - the transaction is at least older than the minimum block height
+/// - the transaction has swap events, originating from the PoolManager
+/// where the poolId is associated with a hook address
 export async function calculateRebate(
   client: PublicClient,
   currentBlockNumber: bigint,
@@ -57,6 +61,7 @@ export async function calculateRebate(
     await client.getBlock({ blockNumber: txnReceipt.blockNumber })
   ).baseFeePerGas!;
 
+  // fetch the eligible swap events
   const swapEvents = parseEventLogs({
     abi: poolManagerAbi,
     logs: txnReceipt.logs
@@ -65,7 +70,7 @@ export async function calculateRebate(
       log.eventName === "Swap" &&
       log.address ===
         poolManagerAddress[
-          client.chain!.id as keyof typeof poolManagerAddress
+          chainId as keyof typeof poolManagerAddress
         ] &&
       log.args.sender === beneficiary
   );

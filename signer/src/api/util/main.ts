@@ -58,6 +58,7 @@ export async function batch(
     };
   }
 
+  // prepare variables for signature generation
   const claimer = await getRebateClaimer(publicClient, beneficiary);
   const startBlockNumber = result.reduce(
     (min: bigint, data) => (data.blockNumber < min ? data.blockNumber : min),
