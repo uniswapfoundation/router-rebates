@@ -103,8 +103,8 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
     }
 
     // Escape hatch function to withdraw ETH from the contract
-    function refundAllETH() external onlyOwner {
-        (bool success,) = msg.sender.call{value: address(this).balance}("");
+    function withdrawETH(address _recipient) external onlyOwner {
+        (bool success,) = _recipient.call{value: address(this).balance}("");
 
         require(success, "transfer failed");
     }
