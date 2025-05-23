@@ -23,6 +23,8 @@ export function getUNIFromETHAmount(ethAmount: bigint): bigint {
 /// @dev rebates are only calculated for the first swap router
 export async function calculateRebate(
   client: PublicClient,
+  currentBlockNumber: bigint,
+  minimumBlockHeight: bigint,
   txnHash: `0x${string}`,
   beneficiary: Address,
   rebatePerSwap: bigint,
@@ -35,6 +37,16 @@ export async function calculateRebate(
   blockNumber: bigint;
 }> {
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
+
+  // do not rebate if the transaction is recent
+  if (currentBlockNumber < txnReceipt.blockNumber + minimumBlockHeight) {
+    return {
+      beneficiary: zeroAddress,
+      gasToRebate: 0n,
+      txnHash: "0x0",
+      blockNumber: 0n,
+    };
+  }
 
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
