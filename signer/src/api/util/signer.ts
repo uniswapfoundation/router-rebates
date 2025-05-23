@@ -9,8 +9,8 @@ const types = {
     { name: "chainId", type: "uint256" },
     { name: "startBlockNumber", type: "uint128" },
     { name: "endBlockNumber", type: "uint128" },
-    { name: "amount", type: "uint256" },
-  ],
+    { name: "amount", type: "uint256" }
+  ]
 };
 
 export async function sign(
@@ -30,9 +30,7 @@ export async function sign(
       name: process.env.REBATE_CONTRACT_NAME,
       version: process.env.REBATE_CONTRACT_VERSION,
       chainId: Number(process.env.REBATE_CHAIN_ID),
-      verifyingContract: getAddress(
-        process.env.REBATE_ADDRESS as `0x${string}`
-      ),
+      verifyingContract: getAddress(process.env.REBATE_ADDRESS as `0x${string}`)
     },
     types: types,
     primaryType: "Claimable",
@@ -42,8 +40,8 @@ export async function sign(
       chainId: chainId,
       startBlockNumber: startBlockNumber,
       endBlockNumber: endBlockNumber,
-      amount: amount,
-    },
+      amount: amount
+    }
   });
   return signature;
 }
@@ -56,7 +54,7 @@ export async function getRebateClaimer(
     return await publicClient.readContract({
       address: beneficiary,
       abi: [parseAbiItem("function rebateClaimer() view returns (address)")],
-      functionName: "rebateClaimer",
+      functionName: "rebateClaimer"
     });
   } catch {
     return zeroAddress;

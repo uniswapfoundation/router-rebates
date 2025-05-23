@@ -20,7 +20,9 @@ export async function batch(
     await getRebatePerEvent();
 
   // deduplicate the txnHashes
-  const uniqueTxnHashes = Array.from(new Set(txnHashes.map((hash) => hash.toLowerCase() as `0x${string}`)));
+  const uniqueTxnHashes = Array.from(
+    new Set(txnHashes.map((hash) => hash.toLowerCase() as `0x${string}`))
+  );
 
   let result = await Promise.all(
     uniqueTxnHashes.map((txnHash) =>
@@ -53,7 +55,7 @@ export async function batch(
       signature: "0x0",
       amount: "0",
       startBlockNumber: "0",
-      endBlockNumber: "0",
+      endBlockNumber: "0"
     };
   }
 
@@ -81,6 +83,6 @@ export async function batch(
     signature,
     amount: amount.toString(),
     startBlockNumber: startBlockNumber.toString(),
-    endBlockNumber: endBlockNumber.toString(),
+    endBlockNumber: endBlockNumber.toString()
   };
 }

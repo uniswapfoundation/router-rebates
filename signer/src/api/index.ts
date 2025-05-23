@@ -48,7 +48,11 @@ app.get("/sign", async (c) => {
     const publicClient = getClient(Number(chainId));
     const txnHashList = txnHashes.split(",") as `0x${string}`[];
 
-    const result = await batch(publicClient, txnHashList, beneficiary as `0x${string}`);
+    const result = await batch(
+      publicClient,
+      txnHashList,
+      beneficiary as `0x${string}`
+    );
 
     return c.json(result);
   } catch (e) {

@@ -5,16 +5,19 @@ import {
   parseEventLogs,
   zeroAddress,
   type Address,
-  type PublicClient,
+  type PublicClient
 } from "viem";
 import { getClient } from "./chain";
 import schema from "ponder:schema";
 import { db as dbClient } from "ponder:api";
 import { poolManagerAddress } from "../../generated";
-import { MINIMUM_BLOCK_HEIGHT, MINIMUM_ELIGIBLE_BLOCK_NUMBER } from "../../constants";
+import {
+  MINIMUM_BLOCK_HEIGHT,
+  MINIMUM_ELIGIBLE_BLOCK_NUMBER
+} from "../../constants";
 
 const abi = parseAbi([
-  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
+  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)"
 ]);
 
 export function getUNIFromETHAmount(ethAmount: bigint): bigint {
@@ -40,13 +43,20 @@ export async function calculateRebate(
   const txnReceipt = await client.getTransactionReceipt({ hash: txnHash });
 
   // do not rebate if the transaction is too old or too recent
-  if ((currentBlockNumber < txnReceipt.blockNumber + MINIMUM_BLOCK_HEIGHT[chainId as keyof typeof MINIMUM_BLOCK_HEIGHT])
-    || (txnReceipt.blockNumber < MINIMUM_ELIGIBLE_BLOCK_NUMBER[chainId as keyof typeof MINIMUM_ELIGIBLE_BLOCK_NUMBER])) {
+  if (
+    currentBlockNumber <
+      txnReceipt.blockNumber +
+        MINIMUM_BLOCK_HEIGHT[chainId as keyof typeof MINIMUM_BLOCK_HEIGHT] ||
+    txnReceipt.blockNumber <
+      MINIMUM_ELIGIBLE_BLOCK_NUMBER[
+        chainId as keyof typeof MINIMUM_ELIGIBLE_BLOCK_NUMBER
+      ]
+  ) {
     return {
       beneficiary: zeroAddress,
       gasToRebate: 0n,
       txnHash: "0x0",
-      blockNumber: 0n,
+      blockNumber: 0n
     };
   }
 
@@ -58,12 +68,14 @@ export async function calculateRebate(
 
   const swapEvents = parseEventLogs({
     abi: abi,
-    logs: txnReceipt.logs,
+    logs: txnReceipt.logs
   }).filter(
     (log) =>
       log.eventName === "Swap" &&
       log.address ===
-        poolManagerAddress[client.chain!.id as keyof typeof poolManagerAddress] &&
+        poolManagerAddress[
+          client.chain!.id as keyof typeof poolManagerAddress
+        ] &&
       log.args.sender === beneficiary
   );
 
@@ -72,7 +84,7 @@ export async function calculateRebate(
       beneficiary: zeroAddress,
       gasToRebate: 0n,
       txnHash: "0x0",
-      blockNumber: 0n,
+      blockNumber: 0n
     };
   }
 
@@ -107,7 +119,7 @@ export async function calculateRebate(
   return {
     beneficiary,
     gasToRebate: gasUsedToRebate * gasPrice,
-    blockNumber: txnReceipt.blockNumber,
+    blockNumber: txnReceipt.blockNumber
   };
 }
 
@@ -120,17 +132,17 @@ export async function getRebatePerEvent(): Promise<{
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],
-    functionName: "rebatePerSwap",
+    functionName: "rebatePerSwap"
   });
   const rebatePerHook = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerHook() view returns (uint256)")],
-    functionName: "rebatePerHook",
+    functionName: "rebatePerHook"
   });
   const rebateFixed = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebateFixed() view returns (uint256)")],
-    functionName: "rebateFixed",
+    functionName: "rebateFixed"
   });
   return { rebatePerSwap, rebatePerHook, rebateFixed };
 }
