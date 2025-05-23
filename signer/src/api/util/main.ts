@@ -1,7 +1,6 @@
 import { zeroAddress, type Address, type PublicClient } from "viem";
 import { calculateRebate, getRebatePerEvent } from "./rebate";
 import { getRebateClaimer, sign } from "./signer";
-import { MINIMUM_BLOCK_HEIGHT } from "../../constants";
 
 export async function batch(
   publicClient: PublicClient,

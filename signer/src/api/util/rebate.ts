@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import {
-  parseAbi,
   parseAbiItem,
   parseEventLogs,
   zeroAddress,
@@ -10,19 +9,11 @@ import {
 import { getClient } from "./chain";
 import schema from "ponder:schema";
 import { db as dbClient } from "ponder:api";
-import { poolManagerAddress } from "../../generated";
+import { poolManagerAbi, poolManagerAddress } from "../../generated";
 import {
   MINIMUM_BLOCK_HEIGHT,
   MINIMUM_ELIGIBLE_BLOCK_NUMBER
 } from "../../constants";
-
-const abi = parseAbi([
-  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)"
-]);
-
-export function getUNIFromETHAmount(ethAmount: bigint): bigint {
-  return BigInt(0);
-}
 
 /// @dev rebates are only calculated for the first swap router
 export async function calculateRebate(
@@ -67,7 +58,7 @@ export async function calculateRebate(
   ).baseFeePerGas!;
 
   const swapEvents = parseEventLogs({
-    abi: abi,
+    abi: poolManagerAbi,
     logs: txnReceipt.logs
   }).filter(
     (log) =>
@@ -119,7 +110,8 @@ export async function calculateRebate(
   return {
     beneficiary,
     gasToRebate: gasUsedToRebate * gasPrice,
-    blockNumber: txnReceipt.blockNumber
+    blockNumber: txnReceipt.blockNumber,
+    txnHash
   };
 }
 
