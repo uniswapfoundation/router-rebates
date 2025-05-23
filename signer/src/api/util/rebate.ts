@@ -10,6 +10,7 @@ import {
 import { getClient } from "./chain";
 import schema from "ponder:schema";
 import { db as dbClient } from "ponder:api";
+import { poolManagerAddress } from "../../generated";
 
 const abi = parseAbi([
   "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
@@ -24,7 +25,11 @@ export async function calculateRebate(
   client: PublicClient,
   currentBlockNumber: bigint,
   minimumBlockHeight: bigint,
-  txnHash: `0x${string}`
+  txnHash: `0x${string}`,
+  beneficiary: Address,
+  rebatePerSwap: bigint,
+  rebatePerHook: bigint,
+  rebateFixed: bigint
 ): Promise<{
   beneficiary: Address;
   gasToRebate: bigint;
@@ -43,9 +48,6 @@ export async function calculateRebate(
     };
   }
 
-  const { rebatePerSwap, rebatePerHook, rebateFixed } =
-    await getRebatePerEvent();
-
   // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
   // and be able to wash trade
   const gasPrice = (
@@ -55,7 +57,13 @@ export async function calculateRebate(
   const swapEvents = parseEventLogs({
     abi: abi,
     logs: txnReceipt.logs,
-  }).filter((log) => log.eventName === "Swap");
+  }).filter(
+    (log) =>
+      log.eventName === "Swap" &&
+      log.address ===
+        poolManagerAddress[client.chain!.id as keyof typeof poolManagerAddress] &&
+      log.args.sender === beneficiary
+  );
 
   if (swapEvents.length === 0) {
     return {
@@ -66,16 +74,13 @@ export async function calculateRebate(
     };
   }
 
-  const beneficiary: Address = swapEvents[0].args.sender;
-
-  // note: within a transaction hash there may be multiple swap routers
-  // this is different than signing for a batch of transaction hashes
-  // TODO: require all events are from the same sender
-
   // iterate each swap event, calculating the rebate for the sender (swap router)
   const rebates = await Promise.all(
     swapEvents.map(async (swapEvent) => {
-      const { id } = swapEvent.args;
+      const { id } = swapEvent.args; // poolId from the swap event
+
+      // NOTE: the database is indexing across multiple chains, so it may fetch duplicates (same poolId, hook address, currencies, etc)
+      // the database is used to associate a poolId with a hook address, so duplicates are deemed safe
       const result = await dbClient
         .select({ hooks: schema.pool.hooks })
         .from(schema.pool)
@@ -104,7 +109,7 @@ export async function calculateRebate(
   };
 }
 
-async function getRebatePerEvent(): Promise<{
+export async function getRebatePerEvent(): Promise<{
   rebatePerSwap: bigint;
   rebatePerHook: bigint;
   rebateFixed: bigint;

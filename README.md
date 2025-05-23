@@ -45,6 +45,11 @@ See [`IRebateClaimer`](foundry-contracts/src/interfaces/IRebateClaimer.sol) for 
 
 **The wallet which claims the rebate is specified by this address, _`rebateClaimer`_**. The backend system performs verification against this address, to prevent griefing scenarios where malicious attackers are claiming rebates they are not entitled to.
 
+Because `rebateClaimer` is the authorized address to claim rebates, integrators **should take care in securing the address**:
+
+- Avoid making the `rebateClaimer` mutable
+- If the address is an EOA, ensure its private key is properly secured
+
 # Claim Process: Signatures
 
 The Router Rebates initiative offers two flows for claiming rebates. In the signature flow, an API service operated by Uniswap Foundation, verifies transactions to produce the rebate size and an authorization signature. The authorization signature, along with its corresponding data, is provided to a smart contract on Unichain to claim the rebate.
@@ -57,12 +62,13 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    txnHashList = ["0xABC", "0xDEF"]
    ```
 
-2. Provide the chainId and transaction list to the API
+2. Provide the chainId, transaction list, and the beneficiary address (swap router) to the API
 
    ```bash
    curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
      --data-urlencode 'chainId=1' \
      --data-urlencode 'txnHashes=0xABC,0xDEF'
+     --data-urlencode 'beneficiary=0xA1B2C3
    ```
 
 3. Example response:
