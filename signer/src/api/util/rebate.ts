@@ -5,7 +5,7 @@ import {
   parseEventLogs,
   zeroAddress,
   type Address,
-  type PublicClient,
+  type PublicClient
 } from "viem";
 import { getClient } from "./chain";
 import schema from "ponder:schema";
@@ -13,11 +13,11 @@ import { db as dbClient } from "ponder:api";
 import { poolManagerAddress } from "../../generated";
 import {
   MINIMUM_BLOCK_HEIGHT,
-  MINIMUM_ELIGIBLE_BLOCK_NUMBER,
+  MINIMUM_ELIGIBLE_BLOCK_NUMBER
 } from "../../constants";
 
 const abi = parseAbi([
-  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
+  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)"
 ]);
 
 export function getUNIFromETHAmount(ethAmount: bigint): bigint {
@@ -33,7 +33,7 @@ export async function calculateRebate(
   beneficiary: Address,
   rebatePerSwap: bigint,
   rebatePerHook: bigint,
-  rebateFixed: bigint,
+  rebateFixed: bigint
 ): Promise<{
   beneficiary: Address;
   gasToRebate: bigint;
@@ -56,7 +56,7 @@ export async function calculateRebate(
       beneficiary: zeroAddress,
       gasToRebate: 0n,
       txnHash: "0x0",
-      blockNumber: 0n,
+      blockNumber: 0n
     };
   }
 
@@ -68,7 +68,7 @@ export async function calculateRebate(
 
   const swapEvents = parseEventLogs({
     abi: abi,
-    logs: txnReceipt.logs,
+    logs: txnReceipt.logs
   }).filter(
     (log) =>
       log.eventName === "Swap" &&
@@ -76,7 +76,7 @@ export async function calculateRebate(
         poolManagerAddress[
           client.chain!.id as keyof typeof poolManagerAddress
         ] &&
-      log.args.sender === beneficiary,
+      log.args.sender === beneficiary
   );
 
   if (swapEvents.length === 0) {
@@ -84,7 +84,7 @@ export async function calculateRebate(
       beneficiary: zeroAddress,
       gasToRebate: 0n,
       txnHash: "0x0",
-      blockNumber: 0n,
+      blockNumber: 0n
     };
   }
 
@@ -105,7 +105,7 @@ export async function calculateRebate(
       } else {
         return 0n;
       }
-    }),
+    })
   );
   let gasUsedToRebate = rebates.reduce((total, rebate) => total + rebate, 0n);
 
@@ -119,7 +119,7 @@ export async function calculateRebate(
   return {
     beneficiary,
     gasToRebate: gasUsedToRebate * gasPrice,
-    blockNumber: txnReceipt.blockNumber,
+    blockNumber: txnReceipt.blockNumber
   };
 }
 
@@ -132,17 +132,17 @@ export async function getRebatePerEvent(): Promise<{
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],
-    functionName: "rebatePerSwap",
+    functionName: "rebatePerSwap"
   });
   const rebatePerHook = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerHook() view returns (uint256)")],
-    functionName: "rebatePerHook",
+    functionName: "rebatePerHook"
   });
   const rebateFixed = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebateFixed() view returns (uint256)")],
-    functionName: "rebateFixed",
+    functionName: "rebateFixed"
   });
   return { rebatePerSwap, rebatePerHook, rebateFixed };
 }
