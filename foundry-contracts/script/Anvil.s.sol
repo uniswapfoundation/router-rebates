@@ -52,7 +52,11 @@ contract AnvilScript is Script {
         vm.stopBroadcast();
 
         vm.startBroadcast();
-        rebates = new RouterRebates("FOUNDATION", address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266));
+        rebates = new RouterRebates(
+            "FOUNDATION",
+            address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266),
+            address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266)
+        );
         rewardToken.mint(msg.sender, 1_000_000e18);
         rewardToken.approve(address(rebates), type(uint256).max);
         vm.stopBroadcast();
