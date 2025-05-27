@@ -40,7 +40,9 @@ export async function batch(
   );
 
   // filter out any invalid transactions, where beneficiary is zero address
-  result = result.filter((data) => data.beneficiary !== zeroAddress);
+  result = result.filter(
+    (data) => data.beneficiary !== zeroAddress && data.gasToRebate > 0n
+  );
 
   const amount = result.reduce(
     (total: bigint, data) => total + data.gasToRebate,
