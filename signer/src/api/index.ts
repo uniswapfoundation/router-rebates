@@ -25,6 +25,7 @@ app.use(
   })
 );
 
+/// @notice the /sign endpoint takes chainId, list of transaction hashes, and the beneficiary address as query parameters
 app.get("/sign", async (c) => {
   const chainId = c.req.query("chainId");
   if (chainId === undefined) {

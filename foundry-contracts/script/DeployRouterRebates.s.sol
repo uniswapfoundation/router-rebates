@@ -30,11 +30,11 @@ contract DeployRouterRebatesScript is Script {
         RouterRebates rebates = new RouterRebates(
             "FOUNDATION",
             address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8),
-            address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8)
+            address(0xf00f0023c694a7c2FA5Cdb721d88e3a1B1a3191d)
         );
 
         vm.broadcast();
-        (bool success,) = address(rebates).call{value: 0.02 ether}("");
+        (bool success,) = address(rebates).call{value: 0.05 ether}("");
         require(success, "Failed to send ether to RouterRebates contract");
     }
 }

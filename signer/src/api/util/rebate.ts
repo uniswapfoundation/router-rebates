@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import {
-  parseAbi,
   parseAbiItem,
   parseEventLogs,
   zeroAddress,
@@ -10,21 +9,17 @@ import {
 import { getClient } from "./chain";
 import schema from "ponder:schema";
 import { db as dbClient } from "ponder:api";
-import { poolManagerAddress } from "../../generated";
+import { poolManagerAbi, poolManagerAddress } from "../../generated";
 import {
   MINIMUM_BLOCK_HEIGHT,
   MINIMUM_ELIGIBLE_BLOCK_NUMBER
 } from "../../constants";
 
-const abi = parseAbi([
-  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)"
-]);
-
-export function getUNIFromETHAmount(ethAmount: bigint): bigint {
-  return BigInt(0);
-}
-
-/// @dev rebates are only calculated for the first swap router
+/// @dev A transaction is eligible for a rebate if:
+/// - the transaction is not older than the minimum eligible block
+/// - the transaction is at least older than the minimum block height
+/// - the transaction has swap events, originating from the PoolManager
+/// where the poolId is associated with a hook address
 export async function calculateRebate(
   client: PublicClient,
   currentBlockNumber: bigint,
@@ -66,15 +61,16 @@ export async function calculateRebate(
     await client.getBlock({ blockNumber: txnReceipt.blockNumber })
   ).baseFeePerGas!;
 
+  // fetch the eligible swap events
   const swapEvents = parseEventLogs({
-    abi: abi,
+    abi: poolManagerAbi,
     logs: txnReceipt.logs
   }).filter(
     (log) =>
       log.eventName === "Swap" &&
       log.address ===
         poolManagerAddress[
-          client.chain!.id as keyof typeof poolManagerAddress
+          chainId as keyof typeof poolManagerAddress
         ] &&
       log.args.sender === beneficiary
   );
@@ -119,7 +115,8 @@ export async function calculateRebate(
   return {
     beneficiary,
     gasToRebate: gasUsedToRebate * gasPrice,
-    blockNumber: txnReceipt.blockNumber
+    blockNumber: txnReceipt.blockNumber,
+    txnHash
   };
 }
 

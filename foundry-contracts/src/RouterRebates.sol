@@ -26,7 +26,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
     /// @dev Thrown when calling claimWithSignature with an empty list of transaction hashes
     error EmptyHashes();
 
-    event Claimed(address claimer, address beneficiary, address recipient, uint256 amount);
+    event Claimed(address claimer, address beneficiary, address recipient, uint256 chainId, uint256 amount);
     event SignerSet(address signer);
     event ZkConfigSet(address brvProof, bytes32 vkHash);
 
@@ -74,7 +74,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         // send amount to recipient
         CurrencyLibrary.ADDRESS_ZERO.transfer(recipient, amount);
 
-        emit Claimed(msg.sender, beneficiary, recipient, amount);
+        emit Claimed(msg.sender, beneficiary, recipient, chainId, amount);
     }
 
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
@@ -133,7 +133,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
                 (bool sent,) = recipient.call{value: amount}("");
                 require(sent, "failed to send eth");
 
-                emit Claimed(msg.sender, beneficiary, recipient, amount);
+                emit Claimed(msg.sender, beneficiary, recipient, uint256(chainid), amount);
             }
             return;
         }
@@ -151,7 +151,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
             (bool sent,) = recipient.call{value: amount}("");
             require(sent, "failed to send eth");
 
-            emit Claimed(msg.sender, beneficiary, recipient, amount);
+            emit Claimed(msg.sender, beneficiary, recipient, uint256(chainid), amount);
         }
     }
 
