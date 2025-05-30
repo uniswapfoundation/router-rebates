@@ -166,6 +166,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         uint64 beginBlk = uint64(bytes8(_appOutput[40:48]));
         uint64 endBlk = uint64(bytes8(_appOutput[48:56]));
 
+        require(beginBlk <= endBlk, "invalid block range");
         require(beginBlk > lastBlockClaimed[uint256(chainid)][router], "begin blocknum too small");
         lastBlockClaimed[uint256(chainid)][router] = endBlk;
         return uint128(bytes16(_appOutput[56:72]));
