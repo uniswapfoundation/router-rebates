@@ -71,6 +71,22 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
      --data-urlencode 'beneficiary=0xA1B2C3
    ```
 
+   Examples
+
+   ```bash
+   curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
+     --data-urlencode 'chainId=84532' \
+     --data-urlencode 'txnHashes=0xc8b74808e858649426cb27b49afac8e3690fe159c18ba7ad39c20905a2318537,0x007485bcf859361bcc6203617fe2e2b22ddf396d27ef2bb1ef8e0d161488d55a,0x0082a1b8d11e8241ef1191bbf3610c48083d6cfd8f24b33fc8d0c60804b49a22' \
+     --data-urlencode 'beneficiary=0xc60c42b04A01c3378F979dCF54eFD1Fd1BC917F8'
+   ```
+
+   ```bash
+   curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
+     --data-urlencode 'chainId=11155111' \
+     --data-urlencode 'txnHashes=0xa52a8b26922942cdc37b7148cfe048db7635ed9aa9e49167aa02f71163f11f74,0xecddc81592699264abf46a33f869d56c0a1f75723f3e4a98406d6e8ebf31037d,0x9ac0f370b1467a177ac1b2ec06f561940caf9560508c0e6c3fb0ef480fe9c3df' \
+     --data-urlencode 'beneficiary=0xE3b6E8c66419E080269bAf138452122EB3322461'
+   ```
+
 3. Example response:
 
    ```json
@@ -93,7 +109,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
 
    |          | RouterRebates                                |
    | -------- | -------------------------------------------- |
-   | Sepolia  | `0x6bec6dff20730840266a2434bcc4c3aa0b139482` |
+   | Sepolia  | `0xbf929102ef670abe0dbf852cac637ca36e06bf3a` |
    | Unichain | TBD                                          |
 
    ***
@@ -117,6 +133,12 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    | amount      | uint256          | The amount of rebate being claimed                                                                 | The amount returned the `GET /sign request`                                                 |
    | blockRange  | BlockNumberRange | A struct of (uint128,uint128) containing the start and end block numbers of the transaction hashes | Start and end block numbers are returned the `GET /sign request`                            |
    | signature   | bytes            | A signature authorizing rebate claims                                                              | Returned by the `GET /sign request`. Internally derived from `abi.encodePacked(r, s, v)`    |
+
+   Example
+
+   ```bash
+   cast
+   ```
 
 # Claim Process: Brevis ZK Proof
 
