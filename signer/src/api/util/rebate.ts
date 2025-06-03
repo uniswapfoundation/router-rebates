@@ -68,11 +68,11 @@ export async function calculateRebate(
   }).filter(
     (log) =>
       log.eventName === "Swap" &&
-      log.address ===
+      log.address.toLowerCase() ===
         poolManagerAddress[
           chainId as keyof typeof poolManagerAddress
-        ] &&
-      log.args.sender === beneficiary
+        ].toLowerCase() &&
+      log.args.sender.toLowerCase() === beneficiary.toLowerCase()
   );
 
   if (swapEvents.length === 0) {
