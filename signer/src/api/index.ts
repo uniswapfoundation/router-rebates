@@ -20,7 +20,7 @@ app.use(
   rateLimiter({
     windowMs: 60 * 1000, // 1 minute
     limit: 50,
-    keyGenerator: (c) => c.req.query("beneficiary") ?? "defaultKey",
+    keyGenerator: (c) => c.req.query("beneficiary").toLowerCase() ?? "defaultKey",
     message: "Too many requests exceeded per minute"
   })
 );
