@@ -126,6 +126,13 @@ export async function getRebatePerEvent(): Promise<{
   rebateFixed: bigint;
 }> {
   const client = getClient(Number(process.env.REBATE_CHAIN_ID));
+  if (client === undefined)
+    return {
+      rebatePerSwap: 0n,
+      rebatePerHook: 0n,
+      rebateFixed: 0n
+    };
+
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],
