@@ -55,12 +55,6 @@ export async function calculateRebate(
     };
   }
 
-  // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
-  // and be able to wash trade
-  const gasPrice = (
-    await client.getBlock({ blockNumber: txnReceipt.blockNumber })
-  ).baseFeePerGas!;
-
   // fetch the eligible swap events
   const swapEvents = parseEventLogs({
     abi: poolManagerAbi,
@@ -112,9 +106,19 @@ export async function calculateRebate(
   gasUsedToRebate =
     maxGasToRebate < gasUsedToRebate ? maxGasToRebate : gasUsedToRebate;
 
+  let gasToRebate = 0n;
+  if (gasUsedToRebate > 0n) {
+    // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
+    // and be able to wash trade
+    const gasPrice = (
+      await client.getBlock({ blockNumber: txnReceipt.blockNumber })
+    ).baseFeePerGas!;
+    gasToRebate = gasUsedToRebate * gasPrice;
+  }
+
   return {
     beneficiary,
-    gasToRebate: gasUsedToRebate * gasPrice,
+    gasToRebate,
     blockNumber: txnReceipt.blockNumber,
     txnHash
   };
