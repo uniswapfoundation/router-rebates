@@ -23,6 +23,8 @@ ethToRebate = gasUsageToRebate * txnReceipt.baseFee
 
 > As a safety precaution against hyper-optimized swaps, the minimum of the above calculation or _80% of transaction gas usage_ is taken
 
+> To ensure the longevity of the program and block-stuffing attacks, the campaign will only rebate up to a gas-price of 50 Gwei. The absolute maximum rebate size is equal to `0.8 * txn_gas_used * min(50 gwei, txn_base_fee)`
+
 # Glossary
 
 `swap router` / `beneficiary` - the onchain contract, that implements `IUnlockCallback`, and is the caller for `poolManager.swap()`. Can also be thought of as the `sender` address in the `Swap()` event
