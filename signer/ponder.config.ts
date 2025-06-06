@@ -17,31 +17,6 @@ export default createConfig({
       transport: http(process.env.PONDER_RPC_URL_130),
       maxRequestsPerSecond: process.env.PONDER_RPC_URL_130 !== "" ? 15 : 5,
     },
-    arbitrum: {
-      chainId: 42161,
-      transport: http(process.env.PONDER_RPC_URL_42161),
-      maxRequestsPerSecond: process.env.PONDER_RPC_URL_42161 !== "" ? 15 : 5,
-    },
-    optimism: {
-      chainId: 10,
-      transport: http(process.env.PONDER_RPC_URL_10),
-      maxRequestsPerSecond: process.env.PONDER_RPC_URL_10 !== "" ? 15 : 5,
-    },
-    base: {
-      chainId: 8453,
-      transport: http(process.env.PONDER_RPC_URL_8453),
-      maxRequestsPerSecond: process.env.PONDER_RPC_URL_8453 !== "" ? 15 : 5,
-    },
-    worldchain: {
-      chainId: 480,
-      transport: http(process.env.PONDER_RPC_URL_480),
-      maxRequestsPerSecond: process.env.PONDER_RPC_URL_480 !== "" ? 15 : 5,
-    },
-    blast: {
-      chainId: 81457,
-      transport: http(process.env.PONDER_RPC_URL_81457),
-      maxRequestsPerSecond: process.env.PONDER_RPC_URL_81457 !== "" ? 15 : 5,
-    },
     ethereum_sepolia: {
       chainId: 11155111,
       transport: http(process.env.PONDER_RPC_URL_11155111),
@@ -79,26 +54,6 @@ export default createConfig({
         unichain: {
           address: poolManagerAddress[130],
           startBlock: process.env.NODE_ENV === "dev" ? "latest" : 0,
-        },
-        arbitrum: {
-          address: poolManagerAddress[42161],
-          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 297842872,
-        },
-        optimism: {
-          address: poolManagerAddress[10],
-          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 130947675,
-        },
-        base: {
-          address: poolManagerAddress[8453],
-          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 25350988,
-        },
-        worldchain: {
-          address: poolManagerAddress[480],
-          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 9111872,
-        },
-        blast: {
-          address: poolManagerAddress[81457],
-          startBlock: process.env.NODE_ENV === "dev" ? "latest" : 14377311,
         },
         ethereum_sepolia: {
           address: poolManagerAddress[11155111],
