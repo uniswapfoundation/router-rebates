@@ -1,12 +1,25 @@
 import {
+  anvil,
   arbitrum,
+  arbitrumSepolia,
   base,
   baseSepolia,
   mainnet,
   optimism,
   sepolia,
-  unichain
+  unichain,
+  unichainSepolia
 } from "viem/chains";
+
+export const SUPPORTED_CHAINS: number[] = [
+  mainnet.id,
+  unichain.id,
+  sepolia.id,
+  baseSepolia.id,
+  arbitrumSepolia.id,
+  unichainSepolia.id,
+  anvil.id
+];
 
 export const MINIMUM_ELIGIBLE_BLOCK_NUMBER = {
   [mainnet.id]: 22547174,

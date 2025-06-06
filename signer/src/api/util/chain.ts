@@ -10,16 +10,7 @@ import {
   unichain,
   unichainSepolia
 } from "viem/chains";
-
-const SUPPORTED_CHAINS: number[] = [
-  mainnet.id,
-  unichain.id,
-  sepolia.id,
-  baseSepolia.id,
-  arbitrumSepolia.id,
-  unichainSepolia.id,
-  anvil.id
-];
+import { SUPPORTED_CHAINS } from "../../constants";
 
 /**
  * Return a viem PublicClient for the given chainId.
