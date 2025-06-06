@@ -62,7 +62,6 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         if (blockRange.startBlockNumber > blockRange.endBlockNumber) revert InvalidBlockNumber();
         if (blockRange.startBlockNumber <= lastBlockClaimed[chainId][beneficiary]) revert InvalidBlockNumber();
 
-        // TODO: explore calldata of keccak256/encodePacked for optimization
         bytes32 digest = ClaimableHash.hashClaimable(
             msg.sender, beneficiary, chainId, blockRange.startBlockNumber, blockRange.endBlockNumber, amount
         );
