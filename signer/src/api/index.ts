@@ -5,6 +5,7 @@ import { graphql } from "ponder";
 import { batch } from "./util/main";
 import { getClient } from "./util/chain";
 import { rateLimiter } from "hono-rate-limiter";
+import { getConnInfo } from "@hono/node-server/conninfo";
 
 const app = new Hono();
 
@@ -13,6 +14,11 @@ const app = new Hono();
 
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
+
+app.use("/test_ip", async (c) => {
+  const info = getConnInfo(c);
+  return c.text(info.remote.address ?? "unknown remote address");
+})
 
 // rate limit the sign endpoint
 app.use(
