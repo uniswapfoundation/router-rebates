@@ -15,7 +15,7 @@ const app = new Hono();
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
 
-// rate limit the sign endpoint
+// rate limit the test endpoint
 app.use(
   "/test-ip",
   rateLimiter({
