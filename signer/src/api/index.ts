@@ -5,7 +5,11 @@ import { graphql } from "ponder";
 import { batch } from "./util/main";
 import { getClient } from "./util/chain";
 import { rateLimiter } from "hono-rate-limiter";
-import { getConnInfo } from "@hono/node-server/conninfo";
+import { getConnInfo as nodeConnInfo } from "@hono/node-server/conninfo";
+import { getConnInfo as vercelConnInfo } from "hono/vercel";
+import { getConnInfo as lambdaConnInfo } from 'hono/lambda-edge'
+import { getConnInfo as denoConnInfo } from 'hono/deno'
+import { getConnInfo as cloudflareConnInfo } from 'hono/cloudflare-workers'
 
 const app = new Hono();
 
@@ -15,9 +19,19 @@ const app = new Hono();
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
 
-app.use("/test_ip", async (c) => {
-  const info = getConnInfo(c);
-  return c.text(info.remote.address ?? "unknown remote address");
+app.use("/test-ip", async (c) => {
+  const nodeInfo = nodeConnInfo(c);
+  const vercelInfo = vercelConnInfo(c);
+  const lambdaInfo = lambdaConnInfo(c);
+  const denoInfo = denoConnInfo(c);
+  const cloudflareInfo = cloudflareConnInfo(c);
+  return c.json({
+    node: nodeInfo.remote.address,
+    vercel: vercelInfo.remote.address,
+    lambda: lambdaInfo.remote.address,
+    deno: denoInfo.remote.address,
+    cloudflare: cloudflareInfo.remote.address,
+  });
 })
 
 // rate limit the sign endpoint
