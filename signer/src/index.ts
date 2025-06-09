@@ -4,7 +4,7 @@ import { zeroAddress } from "viem";
 
 ponder.on("PoolManager:Initialize", async ({ event, context }) => {
   if (event.args.hooks !== zeroAddress) {
-    await context.db.insert(schema.pool).values({
+    context.db.insert(schema.pool).values({
       poolId: event.args.id,
       currency0: event.args.currency0,
       currency1: event.args.currency1,
@@ -12,6 +12,12 @@ ponder.on("PoolManager:Initialize", async ({ event, context }) => {
       tickSpacing: event.args.tickSpacing,
       hooks: event.args.hooks,
       chainId: context.network.chainId
+    }).catch((error) => {
+      console.error("Error inserting pool data:", {
+        poolId: event.args.id,
+        chainId: context.network.chainId,
+        error: error
+      });
     });
   }
 });
