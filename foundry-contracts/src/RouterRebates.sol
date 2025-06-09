@@ -50,6 +50,16 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         signer = _signer;
     }
 
+    /// @notice Claim a rebate via an authorized signature
+    /// @dev Claims must contain a blockRange.startBlockNumber that is greater than the last claimed block number
+    /// Once a blockRange.endBlockNumber is "spent", no claims can be made for blocks preceeding it
+    /// Integrators should ensure their claims are submitted ordered by block number ranges
+    /// @param chainId The chain ID of the claim, returned by the backend endpoint
+    /// @param beneficiary The address that is the beneficiary (swap router)
+    /// @param recipient The address that will receive the native Ether rebate
+    /// @param amount The amount of Ether to be sent to the recipient, returned by the backend endpoint
+    /// @param blockRange The range of blocks that the claim is valid for, returned by the backend endpoint
+    /// @param signature The signature that authorizes the claim, returned by the backend endpoint
     function claimWithSignature(
         uint256 chainId,
         address beneficiary,

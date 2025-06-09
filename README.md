@@ -112,7 +112,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    | Sepolia  | `0xbf929102ef670abe0dbf852cac637ca36e06bf3a` |
    | Unichain | TBD                                          |
 
-   ***
+   > :warning: Integrators MUST submit claims ordered by block number. Claims on block range [100, 200] should be submitted BEFORE claims on block range [400, 500]
 
    ```solidity
    function claimWithSignature(
@@ -139,6 +139,8 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    ```bash
    cast
    ```
+
+   > :warning: Once an `endBlockNumber` is claimed, transactions/signatures containing a block number preceeding `endBlockNumber` are INVALID
 
 # Claim Process: Brevis ZK Proof
 
