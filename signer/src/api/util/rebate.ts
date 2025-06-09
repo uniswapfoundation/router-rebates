@@ -55,15 +55,6 @@ export async function calculateRebate(
     };
   }
 
-  // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
-  // and be able to wash trade
-  let gasPrice = (
-    await client.getBlock({ blockNumber: txnReceipt.blockNumber })
-  ).baseFeePerGas!;
-
-  // cap the gas price to 50 gwei
-  gasPrice = 50000000000n < gasPrice ? 50000000000n : gasPrice;
-
   // fetch the eligible swap events
   const swapEvents = parseEventLogs({
     abi: poolManagerAbi,
@@ -115,9 +106,23 @@ export async function calculateRebate(
   gasUsedToRebate =
     maxGasToRebate < gasUsedToRebate ? maxGasToRebate : gasUsedToRebate;
 
+  let gasToRebate = 0n;
+  if (gasUsedToRebate > 0n) {
+    // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
+    // and be able to wash trade
+    let gasPrice = (
+      await client.getBlock({ blockNumber: txnReceipt.blockNumber })
+    ).baseFeePerGas!;
+
+    // cap the gas price to 50 gwei
+    gasPrice = 50000000000n < gasPrice ? 50000000000n : gasPrice;
+
+    gasToRebate = gasUsedToRebate * gasPrice;
+  }
+
   return {
     beneficiary,
-    gasToRebate: gasUsedToRebate * gasPrice,
+    gasToRebate,
     blockNumber: txnReceipt.blockNumber,
     txnHash
   };
@@ -129,6 +134,13 @@ export async function getRebatePerEvent(): Promise<{
   rebateFixed: bigint;
 }> {
   const client = getClient(Number(process.env.REBATE_CHAIN_ID));
+  if (client === undefined)
+    return {
+      rebatePerSwap: 0n,
+      rebatePerHook: 0n,
+      rebateFixed: 0n
+    };
+
   const rebatePerSwap = await client.readContract({
     address: process.env.REBATE_ADDRESS as Address,
     abi: [parseAbiItem("function rebatePerSwap() view returns (uint256)")],

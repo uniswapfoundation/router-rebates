@@ -47,6 +47,10 @@ app.get("/sign", async (c) => {
 
   try {
     const publicClient = getClient(Number(chainId));
+    if (publicClient === undefined) {
+      return c.text("Unsupported chainId provided");
+    }
+
     const txnHashList = txnHashes.split(",") as `0x${string}`[];
 
     const result = await batch(

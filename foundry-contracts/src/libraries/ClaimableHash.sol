@@ -14,7 +14,7 @@ library ClaimableHash {
         uint128 endBlockNumber,
         uint256 amount
     ) internal pure returns (bytes32 digest) {
-        // need to keccak256/encodePacked transactionHashes as its a dynamic type
+        // Encode parameters for EIP-712 typed signatures
         return keccak256(
             abi.encode(CLAIMABLE_TYPEHASH, claimer, beneficiary, chainId, startBlockNumber, endBlockNumber, amount)
         );
