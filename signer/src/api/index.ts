@@ -5,6 +5,7 @@ import { graphql } from "ponder";
 import { batch } from "./util/main";
 import { getClient } from "./util/chain";
 import { rateLimiter } from "hono-rate-limiter";
+import { getConnInfo as vercelConnInfo } from "hono/vercel";
 
 const app = new Hono();
 
@@ -14,13 +15,29 @@ const app = new Hono();
 app.use("/", graphql({ db, schema }));
 app.use("/graphql", graphql({ db, schema }));
 
+// rate limit the test endpoint
+app.use(
+  "/test-ip",
+  rateLimiter({
+    windowMs: 60 * 1000, // 1 minute
+    limit: 5,
+    keyGenerator: (c) => vercelConnInfo(c).remote.address ?? c.req.query("beneficiary") ?? "defaultKey",
+    message: "Too many requests exceeded per minute"
+  })
+);
+
+app.use("/test-ip", async (c) => {
+  const vercelInfo = vercelConnInfo(c);
+  return c.text(vercelInfo.remote.address ?? "unknown");
+})
+
 // rate limit the sign endpoint
 app.use(
   "/sign",
   rateLimiter({
     windowMs: 60 * 1000, // 1 minute
     limit: 50,
-    keyGenerator: (c) => c.req.query("beneficiary") ?? "defaultKey",
+    keyGenerator: (c) => vercelConnInfo(c).remote.address ?? c.req.query("beneficiary") ?? "defaultKey",
     message: "Too many requests exceeded per minute"
   })
 );
