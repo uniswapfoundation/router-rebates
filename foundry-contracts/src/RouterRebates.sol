@@ -126,6 +126,7 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
         bytes32[] calldata _proofIds,
         IBrevisProof.ProofData[] calldata _proofDataArray
     ) external nonReentrant {
+        require(vkHash != bytes32(0), "vkHash not set");
         uint256 amount = 0; // total eth
         address beneficiary = address(bytes20(_appCircuitOutputs[0][0:20])); // router contract is first 20 bytes of app output
         if (_appCircuitOutputs.length == 1) {
@@ -133,7 +134,6 @@ contract RouterRebates is ReentrancyGuard, EIP712, Owned {
             // check proof
             (, bytes32 appCommitHash, bytes32 appVkHash) = brvProof.submitProof(chainid, _proof);
 
-            require(vkHash != bytes32(0), "vkHash not set");
             require(appVkHash == vkHash, "mismatch vkHash");
             require(appCommitHash == keccak256(_appOutput), "invalid circuit output");
 
