@@ -110,9 +110,13 @@ export async function calculateRebate(
   if (gasUsedToRebate > 0n) {
     // Use baseFee and do not use priorityFee, otherwise miners will set a high priority fee (paid back to themselves)
     // and be able to wash trade
-    const gasPrice = (
+    let gasPrice = (
       await client.getBlock({ blockNumber: txnReceipt.blockNumber })
     ).baseFeePerGas!;
+
+    // cap the gas price to 50 gwei
+    gasPrice = 50000000000n < gasPrice ? 50000000000n : gasPrice;
+
     gasToRebate = gasUsedToRebate * gasPrice;
   }
 
