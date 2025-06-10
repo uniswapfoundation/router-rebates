@@ -9,18 +9,12 @@ import {
 } from "viem/chains";
 
 export const SUPPORTED_CHAINS: number[] = [
-  mainnet.id,
-  unichain.id,
-  sepolia.id,
-  unichainSepolia.id,
-  baseSepolia.id,
-  arbitrumSepolia.id,
-  anvil.id
+  unichain.id
 ];
 
 export const MINIMUM_ELIGIBLE_BLOCK_NUMBER = {
   [mainnet.id]: 22547174,
-  [unichain.id]: 17274865,
+  [unichain.id]: 18839142,
   [sepolia.id]: 0,
   [unichainSepolia.id]: 0,
   [baseSepolia.id]: 0,
