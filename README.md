@@ -112,7 +112,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    |          | RouterRebates                                |
    | -------- | -------------------------------------------- |
    | Sepolia  | `0xbf929102ef670abe0dbf852cac637ca36e06bf3a` |
-   | Unichain | TBD                                          |
+   | Unichain | `0x3EDb72Ab3cA1B0869572cC31B95AA1ea078AE9a0` |
 
    > :warning: Integrators MUST submit claims ordered by block number. Claims on block range [100, 200] should be submitted BEFORE claims on block range [400, 500]
 
