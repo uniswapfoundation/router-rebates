@@ -29,7 +29,7 @@ contract DeployRouterRebatesScript is Script {
         vm.broadcast();
         RouterRebates rebates = new RouterRebates(
             "FOUNDATION",
-            address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8),
+            address(0x7024cc7e60D6560f0B5877DA2bb921FCbF1f4375),
             address(0xf00f0023c694a7c2FA5Cdb721d88e3a1B1a3191d)
         );
 
