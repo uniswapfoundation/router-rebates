@@ -149,8 +149,8 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
 Router projects can also claim gas rebates using Brevis ZK proof in a trust-free manner. High level flow is similar to signature-based above except that a ZK proof is returned from Brevis backend and sent to onchain contract by the claimer.
 
 1. Brevis system recognizes claimer address from router contract's `rebateClaimer`
-2. Provide the chainId and transaction list to Brevis backend `xxxx(tbd).brevis.network/zk/new` in the same format as signature-based flow, and receives `reqid` in response as generating ZK proof is async
-3. Query `xxxx(tbd).brevis.network/zk/get/{reqid}` to get ZK proof and data to submit onchain. See full response object definition [here](https://github.com/brevis-network/uniswap-rebate/blob/v4/proto/webapi.proto)
+2. Provide the chainId and transaction list to Brevis backend `uniswap-gas-rebate.brevis.network/zk/new` in the same format as signature-based flow, and receives `reqid` in response as generating ZK proof is async
+3. Query `uniswap-gas-rebate.brevis.network/zk/get/{reqid}` to get ZK proof and data to submit onchain. See full response object definition [here](https://github.com/brevis-network/uniswap-rebate/blob/v4/proto/webapi.proto)
 4. Claimer sends onchain tx to the same RouterRebates contract's `claimWithZkProof` function
 
 ```solidity
