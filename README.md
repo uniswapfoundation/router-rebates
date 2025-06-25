@@ -67,7 +67,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
 2. Provide the chainId, transaction list, and the beneficiary address (swap router) to the API
 
    ```bash
-   curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
+   curl -G 'https://router-rebates.up.railway.app/sign' \
      --data-urlencode 'chainId=1' \
      --data-urlencode 'txnHashes=0xABC,0xDEF'
      --data-urlencode 'beneficiary=0xA1B2C3
@@ -76,14 +76,14 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    Examples
 
    ```bash
-   curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
+   curl -G 'https://router-rebates.up.railway.app/sign' \
      --data-urlencode 'chainId=84532' \
      --data-urlencode 'txnHashes=0xc8b74808e858649426cb27b49afac8e3690fe159c18ba7ad39c20905a2318537,0x007485bcf859361bcc6203617fe2e2b22ddf396d27ef2bb1ef8e0d161488d55a,0x0082a1b8d11e8241ef1191bbf3610c48083d6cfd8f24b33fc8d0c60804b49a22' \
      --data-urlencode 'beneficiary=0xc60c42b04A01c3378F979dCF54eFD1Fd1BC917F8'
    ```
 
    ```bash
-   curl -G 'https://router-rebates-testnet.up.railway.app/sign' \
+   curl -G 'https://router-rebates.up.railway.app/sign' \
      --data-urlencode 'chainId=11155111' \
      --data-urlencode 'txnHashes=0xa52a8b26922942cdc37b7148cfe048db7635ed9aa9e49167aa02f71163f11f74,0xecddc81592699264abf46a33f869d56c0a1f75723f3e4a98406d6e8ebf31037d,0x9ac0f370b1467a177ac1b2ec06f561940caf9560508c0e6c3fb0ef480fe9c3df' \
      --data-urlencode 'beneficiary=0xE3b6E8c66419E080269bAf138452122EB3322461'
@@ -91,7 +91,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
 
 3. Example response:
 
-   ```json
+   ```js
    {
      // rebateClaimer address set by the beneficiary
      "claimer": "0x7024cc7e60D6560f0B5877DA2bb921FCbF1f4375",
@@ -112,7 +112,7 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    |          | RouterRebates                                |
    | -------- | -------------------------------------------- |
    | Sepolia  | `0xbf929102ef670abe0dbf852cac637ca36e06bf3a` |
-   | Unichain | TBD                                          |
+   | Unichain | `0x3EDb72Ab3cA1B0869572cC31B95AA1ea078AE9a0` |
 
    > :warning: Integrators MUST submit claims ordered by block number. Claims on block range [100, 200] should be submitted BEFORE claims on block range [400, 500]
 
@@ -139,7 +139,26 @@ To prevent signature replays and/or duplicate claiming, rebate claims operate on
    Example
 
    ```bash
-   cast
+   cast send $REBATE_CONTRACT_ADDRESS "claimWithSignature(uint256,address,address,uint256,(uint128,uint128),bytes)" \
+      $CHAIN_ID \
+      $BENEFICIARY_ADDR \
+      $RECIPIENT_ADDR \
+      $AMOUNT \
+      "($START_BLOCK,$END_BLOCK)" \
+      $SIGNATURE \
+      --rpc-url "https://sepolia.gateway.tenderly.co" \
+      --private-key $YOUR_PRIVATE_KEY
+
+   # example:
+   cast send 0xBf929102EF670abE0dbF852cAc637cA36e06bf3A "claimWithSignature(uint256,address,address,uint256,(uint128,uint128),bytes)" \
+      11155111 \
+      0xE3b6E8c66419E080269bAf138452122EB3322461 \
+      0x7024cc7e60D6560f0B5877DA2bb921FCbF1f4375 \
+      1117413 \
+      "(8427649,8427649)" \
+      0xfd5f188f32e11fcd9ed1b634b543afffcb4ca7df0a8bd16776453203c706c40e3c568cdb070a43bc541d8c3484becc92ca85763856fff0d0b1d7d95959e564011b \
+      --rpc-url "https://sepolia.gateway.tenderly.co" \
+      --private-key $YOUR_PRIVATE_KEY
    ```
 
    > :warning: Once an `endBlockNumber` is claimed, transactions/signatures containing a block number preceeding `endBlockNumber` are INVALID
